@@ -1,0 +1,9 @@
+{
+  "name": "Shirley — Checklist por voz",
+  "short_name": "Shirley",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f6f3ee",
+  "theme_color": "#f6f3ee",
+  "icons": []
+}

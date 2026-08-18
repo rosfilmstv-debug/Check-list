@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f3ee" />
+  <title>Shirley — Checklist por voz</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root{
+      --bg:#f6f3ee;
+      --card:#ffffff;
+      --ink:#191919;
+      --muted:#77736d;
+      --line:#e7e1d9;
+      --accent:#5e7d63;
+      --accent2:#dfe9df;
+      --buy:#f0dfc8;
+      --bought:#d8e8dc;
+      --ready:#d8e1ef;
+      --shadow: 0 12px 34px rgba(40,36,31,.08);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+    body{min-height:100vh}
+    .app{max-width:720px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 18px calc(100px + env(safe-area-inset-bottom))}
+    .top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:20px}
+    .brand h1{margin:0;font-size:32px;letter-spacing:-1.2px}
+    .brand p{margin:4px 0 0;color:var(--muted);font-size:14px}
+    .counter{min-width:62px;height:62px;border-radius:20px;background:var(--card);display:grid;place-items:center;box-shadow:var(--shadow);font-weight:800}
+    .counter small{display:block;font-size:10px;color:var(--muted);font-weight:600;text-align:center}
+    .composer{background:var(--card);border-radius:28px;padding:16px;box-shadow:var(--shadow);margin-bottom:18px}
+    textarea{width:100%;border:0;outline:0;resize:none;font:inherit;font-size:16px;line-height:1.4;min-height:76px;background:transparent;color:var(--ink)}
+    textarea::placeholder{color:#aaa39a}
+    .composer-row{display:flex;gap:10px;align-items:center}
+    button{font:inherit;border:0;cursor:pointer}
+    .voice{width:52px;height:52px;border-radius:50%;background:var(--ink);color:white;display:grid;place-items:center;font-size:22px;flex:0 0 auto}
+    .voice.listening{animation:pulse 1.1s infinite;background:#9f3e3e}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(159,62,62,.35)}70%{box-shadow:0 0 0 12px rgba(159,62,62,0)}100%{box-shadow:0 0 0 0 rgba(159,62,62,0)}}
+    .add{height:52px;border-radius:16px;background:var(--accent);color:white;font-weight:750;padding:0 18px;flex:1}
+    select{height:52px;border:1px solid var(--line);border-radius:16px;background:#faf9f7;padding:0 12px;outline:0;color:var(--ink);max-width:160px}
+    .hint{font-size:12px;color:var(--muted);margin-top:10px}
+    .filters{display:flex;gap:8px;overflow:auto;padding:2px 0 12px;scrollbar-width:none}
+    .filters::-webkit-scrollbar{display:none}
+    .chip{white-space:nowrap;padding:10px 14px;border-radius:999px;background:#ece6de;color:#5b5751;font-size:13px;font-weight:700}
+    .chip.active{background:var(--ink);color:white}
+    .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+    .stat{padding:12px;border-radius:18px;text-align:center;font-weight:800;font-size:18px}
+    .stat span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;font-weight:700;color:#605d58}
+    .stat.buy{background:var(--buy)} .stat.bought{background:var(--bought)} .stat.ready{background:var(--ready)}
+    .section-title{font-weight:850;font-size:18px;margin:18px 2px 10px}
+    .list{display:flex;flex-direction:column;gap:10px}
+    .item{background:var(--card);border-radius:20px;padding:14px;box-shadow:0 6px 20px rgba(40,36,31,.05);display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+    .item-main{min-width:0}
+    .item-title{font-size:16px;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .meta{display:flex;align-items:center;gap:7px;margin-top:7px;font-size:11px;color:var(--muted)}
+    .badge{padding:5px 8px;border-radius:999px;background:#f1eee9;font-weight:700}
+    .status{padding:9px 11px;border-radius:12px;font-size:12px;font-weight:850}
+    .status.buy{background:var(--buy)} .status.bought{background:var(--bought)} .status.ready{background:var(--ready)}
+    .actions{display:flex;gap:7px;margin-top:10px}
+    .mini{background:#f5f2ed;border-radius:10px;padding:7px 9px;font-size:11px;font-weight:700;color:#5d5953}
+    .empty{padding:44px 20px;text-align:center;color:var(--muted);background:rgba(255,255,255,.55);border-radius:22px}
+    .bottom{position:fixed;left:0;right:0;bottom:0;padding:10px 18px calc(10px + env(safe-area-inset-bottom));pointer-events:none}
+    .bottom-inner{max-width:684px;margin:auto;background:rgba(25,25,25,.94);backdrop-filter:blur(20px);border-radius:22px;padding:10px;display:flex;gap:8px;pointer-events:auto}
+    .bottom button{flex:1;height:44px;border-radius:14px;background:transparent;color:#ddd;font-weight:750}
+    .bottom button.active{background:white;color:#111}
+    .danger{color:#9f3e3e}
+    .sheet{position:fixed;inset:0;background:rgba(0,0,0,.28);display:none;align-items:flex-end;z-index:50}
+    .sheet.open{display:flex}
+    .sheet-card{background:var(--bg);width:100%;max-width:720px;margin:0 auto;border-radius:28px 28px 0 0;padding:20px 18px calc(28px + env(safe-area-inset-bottom))}
+    .sheet-card h3{margin:0 0 14px}
+    .cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .cat-btn{background:white;border-radius:16px;padding:14px;text-align:left;font-weight:750}
+    .small-note{font-size:12px;color:var(--muted);margin-top:14px}
+    @media(min-width:700px){.bottom{position:sticky;bottom:10px}.app{padding-bottom:20px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand">
+      <h1>Shirley</h1>
+      <p>Dilo. Ordénalo. Prepáralo.</p>
+    </div>
+    <div class="counter"><div><div id="readyPct">0%</div><small>LISTO</small></div></div>
+  </div>
+
+  <div class="composer">
+    <textarea id="input" placeholder="Ej.: comprar champú, preparar cargadores, ya tengo las camisetas..."></textarea>
+    <div class="composer-row">
+      <button id="voiceBtn" class="voice" aria-label="Dictar">🎙️</button>
+      <select id="categorySelect"></select>
+      <button id="addBtn" class="add">Añadir</button>
+    </div>
+    <div id="voiceHint" class="hint">Puedes decir varias cosas seguidas. Shirley intentará separarlas automáticamente.</div>
+  </div>
+
+  <div class="filters" id="filters"></div>
+
+  <div class="summary">
+    <div class="stat buy"><b id="countBuy">0</b><span>Comprar</span></div>
+    <div class="stat bought"><b id="countBought">0</b><span>Comprado</span></div>
+    <div class="stat ready"><b id="countReady">0</b><span>Preparado</span></div>
+  </div>
+
+  <div class="section-title" id="listTitle">Todo</div>
+  <div id="list" class="list"></div>
+</div>
+
+<div class="bottom">
+  <div class="bottom-inner">
+    <button class="active" data-mode="all">Todo</button>
+    <button data-mode="buy">Comprar</button>
+    <button data-mode="ready">Preparado</button>
+    <button id="settingsBtn">Categorías</button>
+  </div>
+</div>
+
+<div id="sheet" class="sheet">
+  <div class="sheet-card">
+    <h3>Categorías</h3>
+    <div class="cat-grid" id="categoryManager"></div>
+    <div class="small-note">Toca una categoría para usarla. Puedes crear categorías nuevas desde el botón “+ Nueva”.</div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_CATS = ["Ropa","Aseo","Tecnología","Documentos","Comida","Casa","Viaje","Otros"];
+const key="shirley-data-v1";
+let state = JSON.parse(localStorage.getItem(key)||"null") || {
+  items: [
+    {id:crypto.randomUUID(), text:"Cargador del móvil", category:"Tecnología", status:"buy"},
+    {id:crypto.randomUUID(), text:"Neceser", category:"Aseo", status:"bought"},
+    {id:crypto.randomUUID(), text:"DNI / documentación", category:"Documentos", status:"ready"}
+  ],
+  cats:[...DEFAULT_CATS],
+  filter:"Todas",
+  mode:"all"
+};
+
+const input=document.querySelector("#input"), list=document.querySelector("#list");
+const categorySelect=document.querySelector("#categorySelect"), filters=document.querySelector("#filters");
+const sheet=document.querySelector("#sheet"), categoryManager=document.querySelector("#categoryManager");
+
+function save(){ localStorage.setItem(key,JSON.stringify(state)); render(); }
+function esc(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+function inferCategory(text){
+ const t=text.toLowerCase();
+ const maps=[
+  ["Aseo",["champú","gel","cepillo","dientes","pasta","desodorante","toalla","afeit","crema"]],
+  ["Tecnología",["cargador","móvil","iphone","cable","batería","powerbank","auriculares","portátil","tablet"]],
+  ["Documentos",["dni","pasaporte","document","billete","reserva","tarjeta","seguro"]],
+  ["Ropa",["camiseta","pantalón","calcet","ropa","chaqueta","zapatos","zapatillas","bañador","vestido"]],
+  ["Comida",["agua","comida","snack","bocadillo","fruta","bebida"]],
+  ["Casa",["llaves","basura","persiana","ventana","puerta","planta"]],
+  ["Viaje",["maleta","mochila","hotel","vuelo","avión","tren","coche"]]
+ ];
+ for(const [c,words] of maps) if(words.some(w=>t.includes(w))) return c;
+ return categorySelect.value || "Otros";
+}
+
+function inferStatus(text){
+ const t=text.toLowerCase();
+ if(/(ya tengo|comprado|comprada|ya compré|lo tengo)/.test(t)) return "bought";
+ if(/(preparado|preparada|ya está|metido|guardado|listo|lista)/.test(t)) return "ready";
+ return "buy";
+}
+
+function cleanText(text){
+ return text
+  .replace(/^(comprar|compra|preparar|prepara|ya tengo|tengo que comprar|he comprado|comprado|preparado|meter|guardar)\s+/i,"")
+  .replace(/[.]+$/,"").trim();
+}
+
+function parseItems(raw){
+ let parts = raw
+  .replace(/\n/g,",")
+  .split(/,|;|\by\b(?=\s+(?:comprar|preparar|meter|guardar|llevar|ya|el|la|los|las|un|una))/i)
+  .map(s=>s.trim()).filter(Boolean);
+ if(parts.length===1 && raw.trim().split(" ").length<10) parts=[raw.trim()];
+ return parts.map(p=>({
+   id:crypto.randomUUID(),
+   text:cleanText(p),
+   category:inferCategory(p),
+   status:inferStatus(p)
+ })).filter(x=>x.text);
+}
+
+function addFromInput(){
+ const raw=input.value.trim(); if(!raw)return;
+ state.items.unshift(...parseItems(raw));
+ input.value="";
+ save();
+}
+document.querySelector("#addBtn").onclick=addFromInput;
+input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();addFromInput()}});
+
+function statusLabel(s){return s==="buy"?"Comprar":s==="bought"?"Comprado":"Preparado"}
+function nextStatus(s){return s==="buy"?"bought":s==="bought"?"ready":"buy"}
+
+function render(){
+ categorySelect.innerHTML=state.cats.map(c=>`<option ${c==="Otros"?"selected":""}>${esc(c)}</option>`).join("");
+ filters.innerHTML=["Todas",...state.cats].map(c=>`<button class="chip ${state.filter===c?"active":""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+ filters.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{state.filter=b.dataset.cat;save()});
+
+ let visible=state.items.filter(i=>state.filter==="Todas"||i.category===state.filter);
+ if(state.mode==="buy") visible=visible.filter(i=>i.status==="buy");
+ if(state.mode==="ready") visible=visible.filter(i=>i.status==="ready");
+
+ document.querySelector("#listTitle").textContent = state.filter==="Todas" ? (state.mode==="all"?"Todo":state.mode==="buy"?"Por comprar":"Preparado") : state.filter;
+ list.innerHTML=visible.length?visible.map(i=>`
+ <div class="item">
+  <div class="item-main">
+    <div class="item-title">${esc(i.text)}</div>
+    <div class="meta"><span class="badge">${esc(i.category)}</span></div>
+    <div class="actions">
+      <button class="mini" data-edit="${i.id}">Editar</button>
+      <button class="mini danger" data-del="${i.id}">Eliminar</button>
+    </div>
+  </div>
+  <button class="status ${i.status}" data-status="${i.id}">${statusLabel(i.status)}</button>
+ </div>`).join(""):`<div class="empty">No hay nada aquí todavía.<br><br>🎙️ Dicta una nota o añade algo manualmente.</div>`;
+
+ list.querySelectorAll("[data-status]").forEach(b=>b.onclick=()=>{
+   const it=state.items.find(x=>x.id===b.dataset.status); it.status=nextStatus(it.status); save();
+ });
+ list.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
+   state.items=state.items.filter(x=>x.id!==b.dataset.del); save();
+ });
+ list.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{
+   const it=state.items.find(x=>x.id===b.dataset.edit);
+   const v=prompt("Editar elemento",it.text);
+   if(v&&v.trim()){it.text=v.trim(); it.category=inferCategory(v); save();}
+ });
+
+ const cb=state.items.filter(i=>i.status==="buy").length;
+ const cbt=state.items.filter(i=>i.status==="bought").length;
+ const cr=state.items.filter(i=>i.status==="ready").length;
+ document.querySelector("#countBuy").textContent=cb;
+ document.querySelector("#countBought").textContent=cbt;
+ document.querySelector("#countReady").textContent=cr;
+ document.querySelector("#readyPct").textContent=state.items.length?Math.round(cr/state.items.length*100)+"%":"0%";
+
+ document.querySelectorAll(".bottom [data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===state.mode));
+ renderCats();
+}
+
+document.querySelectorAll(".bottom [data-mode]").forEach(b=>b.onclick=()=>{state.mode=b.dataset.mode;save()});
+document.querySelector("#settingsBtn").onclick=()=>sheet.classList.add("open");
+sheet.onclick=e=>{if(e.target===sheet)sheet.classList.remove("open")};
+
+function renderCats(){
+ categoryManager.innerHTML=state.cats.map(c=>`<button class="cat-btn" data-use="${esc(c)}">${esc(c)}</button>`).join("")+
+ `<button class="cat-btn" id="newCat">＋ Nueva</button>`;
+ categoryManager.querySelectorAll("[data-use]").forEach(b=>b.onclick=()=>{
+   categorySelect.value=b.dataset.use; sheet.classList.remove("open");
+ });
+ const n=document.querySelector("#newCat");
+ if(n)n.onclick=()=>{
+   const c=prompt("Nombre de la categoría");
+   if(c&&c.trim()&&!state.cats.includes(c.trim())){state.cats.push(c.trim());save();}
+ };
+}
+
+// Speech recognition
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const voiceBtn=document.querySelector("#voiceBtn");
+const voiceHint=document.querySelector("#voiceHint");
+if(SpeechRecognition){
+ const rec=new SpeechRecognition();
+ rec.lang="es-ES"; rec.interimResults=true; rec.continuous=false;
+ rec.onstart=()=>{voiceBtn.classList.add("listening"); voiceHint.textContent="Escuchando… habla con naturalidad."};
+ rec.onresult=e=>{
+   let txt="";
+   for(let i=e.resultIndex;i<e.results.length;i++) txt+=e.results[i][0].transcript;
+   input.value=txt;
+ };
+ rec.onend=()=>{voiceBtn.classList.remove("listening");voiceHint.textContent="Revisa el texto y pulsa Añadir."; if(input.value.trim()) addFromInput();};
+ rec.onerror=e=>{voiceBtn.classList.remove("listening"); voiceHint.textContent="No he podido usar el micrófono. Puedes escribir la nota manualmente."};
+ voiceBtn.onclick=()=>rec.start();
+}else{
+ voiceBtn.onclick=()=>alert("El dictado web no está disponible en este navegador. En iPhone puedes usar el micrófono del teclado para dictar.");
+ voiceHint.textContent="En iPhone puedes dictar usando el micrófono del teclado.";
+}
+render();
+</script>
+</body>
+</html>
