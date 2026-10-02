@@ -2,289 +2,469 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#f6f3ee" />
-  <title>Shirley — Checklist por voz</title>
-  <link rel="manifest" href="manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0F172A" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Sara & David · Gastos</title>
   <style>
     :root{
-      --bg:#f6f3ee;
-      --card:#ffffff;
-      --ink:#191919;
-      --muted:#77736d;
-      --line:#e7e1d9;
-      --accent:#5e7d63;
-      --accent2:#dfe9df;
-      --buy:#f0dfc8;
-      --bought:#d8e8dc;
-      --ready:#d8e1ef;
-      --shadow: 0 12px 34px rgba(40,36,31,.08);
-      --radius:22px;
+      --bg:#F6F7FB; --card:#FFFFFF; --ink:#111827; --muted:#6B7280; --line:#E7EAF0;
+      --purple:#7C3AED; --blue:#2563EB; --pink:#EC4899; --orange:#F97316;
+      --green:#10B981; --amber:#F59E0B; --red:#EF4444;
+      --shadow:0 10px 30px rgba(17,24,39,.08); --radius:22px;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
-    body{min-height:100vh}
-    .app{max-width:720px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 18px calc(100px + env(safe-area-inset-bottom))}
-    .top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:20px}
-    .brand h1{margin:0;font-size:32px;letter-spacing:-1.2px}
-    .brand p{margin:4px 0 0;color:var(--muted);font-size:14px}
-    .counter{min-width:62px;height:62px;border-radius:20px;background:var(--card);display:grid;place-items:center;box-shadow:var(--shadow);font-weight:800}
-    .counter small{display:block;font-size:10px;color:var(--muted);font-weight:600;text-align:center}
-    .composer{background:var(--card);border-radius:28px;padding:16px;box-shadow:var(--shadow);margin-bottom:18px}
-    textarea{width:100%;border:0;outline:0;resize:none;font:inherit;font-size:16px;line-height:1.4;min-height:76px;background:transparent;color:var(--ink)}
-    textarea::placeholder{color:#aaa39a}
-    .composer-row{display:flex;gap:10px;align-items:center}
-    button{font:inherit;border:0;cursor:pointer}
-    .voice{width:52px;height:52px;border-radius:50%;background:var(--ink);color:white;display:grid;place-items:center;font-size:22px;flex:0 0 auto}
-    .voice.listening{animation:pulse 1.1s infinite;background:#9f3e3e}
-    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(159,62,62,.35)}70%{box-shadow:0 0 0 12px rgba(159,62,62,0)}100%{box-shadow:0 0 0 0 rgba(159,62,62,0)}}
-    .add{height:52px;border-radius:16px;background:var(--accent);color:white;font-weight:750;padding:0 18px;flex:1}
-    select{height:52px;border:1px solid var(--line);border-radius:16px;background:#faf9f7;padding:0 12px;outline:0;color:var(--ink);max-width:160px}
-    .hint{font-size:12px;color:var(--muted);margin-top:10px}
-    .filters{display:flex;gap:8px;overflow:auto;padding:2px 0 12px;scrollbar-width:none}
-    .filters::-webkit-scrollbar{display:none}
-    .chip{white-space:nowrap;padding:10px 14px;border-radius:999px;background:#ece6de;color:#5b5751;font-size:13px;font-weight:700}
-    .chip.active{background:var(--ink);color:white}
-    .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
-    .stat{padding:12px;border-radius:18px;text-align:center;font-weight:800;font-size:18px}
-    .stat span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;font-weight:700;color:#605d58}
-    .stat.buy{background:var(--buy)} .stat.bought{background:var(--bought)} .stat.ready{background:var(--ready)}
-    .section-title{font-weight:850;font-size:18px;margin:18px 2px 10px}
-    .list{display:flex;flex-direction:column;gap:10px}
-    .item{background:var(--card);border-radius:20px;padding:14px;box-shadow:0 6px 20px rgba(40,36,31,.05);display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
-    .item-main{min-width:0}
-    .item-title{font-size:16px;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .meta{display:flex;align-items:center;gap:7px;margin-top:7px;font-size:11px;color:var(--muted)}
-    .badge{padding:5px 8px;border-radius:999px;background:#f1eee9;font-weight:700}
-    .status{padding:9px 11px;border-radius:12px;font-size:12px;font-weight:850}
-    .status.buy{background:var(--buy)} .status.bought{background:var(--bought)} .status.ready{background:var(--ready)}
-    .actions{display:flex;gap:7px;margin-top:10px}
-    .mini{background:#f5f2ed;border-radius:10px;padding:7px 9px;font-size:11px;font-weight:700;color:#5d5953}
-    .empty{padding:44px 20px;text-align:center;color:var(--muted);background:rgba(255,255,255,.55);border-radius:22px}
-    .bottom{position:fixed;left:0;right:0;bottom:0;padding:10px 18px calc(10px + env(safe-area-inset-bottom));pointer-events:none}
-    .bottom-inner{max-width:684px;margin:auto;background:rgba(25,25,25,.94);backdrop-filter:blur(20px);border-radius:22px;padding:10px;display:flex;gap:8px;pointer-events:auto}
-    .bottom button{flex:1;height:44px;border-radius:14px;background:transparent;color:#ddd;font-weight:750}
-    .bottom button.active{background:white;color:#111}
-    .danger{color:#9f3e3e}
-    .sheet{position:fixed;inset:0;background:rgba(0,0,0,.28);display:none;align-items:flex-end;z-index:50}
-    .sheet.open{display:flex}
-    .sheet-card{background:var(--bg);width:100%;max-width:720px;margin:0 auto;border-radius:28px 28px 0 0;padding:20px 18px calc(28px + env(safe-area-inset-bottom))}
-    .sheet-card h3{margin:0 0 14px}
-    .cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-    .cat-btn{background:white;border-radius:16px;padding:14px;text-align:left;font-weight:750}
-    .small-note{font-size:12px;color:var(--muted);margin-top:14px}
-    @media(min-width:700px){.bottom{position:sticky;bottom:10px}.app{padding-bottom:20px}}
+    body{
+      margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Inter,Segoe UI,Roboto,sans-serif;
+      background:
+        radial-gradient(circle at 10% -10%,rgba(124,58,237,.13),transparent 34%),
+        radial-gradient(circle at 100% 0%,rgba(37,99,235,.10),transparent 30%),var(--bg);
+      color:var(--ink);min-height:100vh;padding-bottom:100px
+    }
+    button,input,select{font:inherit}
+    .app{max-width:620px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px 24px}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    .eyebrow{font-size:12px;color:var(--muted);font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    h1{font-size:27px;line-height:1.05;margin:4px 0 0}
+    .avatar-group{display:flex}.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:900;border:3px solid var(--bg);margin-left:-8px;box-shadow:var(--shadow)}
+    .avatar:first-child{margin-left:0}.saraA{background:linear-gradient(135deg,var(--pink),var(--orange))}.davidA{background:linear-gradient(135deg,var(--blue),var(--purple))}
+    .people-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+    .person-card{color:#fff;border-radius:26px;padding:18px 16px;box-shadow:0 16px 36px rgba(17,24,39,.17);position:relative;overflow:hidden}
+    .person-card:after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;right:-48px;top:-44px;background:rgba(255,255,255,.09)}
+    .person-card.sara{background:linear-gradient(145deg,#BE185D,#EC4899 55%,#F97316)}
+    .person-card.david{background:linear-gradient(145deg,#1D4ED8,#2563EB 52%,#7C3AED)}
+    .person-name{font-size:19px;font-weight:950}
+    .person-main-label{font-size:11px;opacity:.72;margin-top:14px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}
+    .person-main{font-size:31px;font-weight:950;letter-spacing:-.05em;margin:3px 0 14px}
+    .person-mini{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+    .person-mini div{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.10);border-radius:13px;padding:9px}
+    .person-mini span{display:block;font-size:9px;opacity:.68;margin-bottom:3px;text-transform:uppercase;font-weight:800}
+    .person-mini strong{font-size:13px}
+    .combined{background:linear-gradient(135deg,#111827,#1F2937 60%,#312E81);color:#fff;border-radius:26px;padding:18px;box-shadow:0 16px 38px rgba(17,24,39,.2);margin-bottom:15px}
+    .combined-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:12px}
+    .combined-title{font-size:18px;font-weight:950}.combined-sub{font-size:11px;color:rgba(255,255,255,.62)}
+    .combined-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .combined-stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);border-radius:15px;padding:11px 9px}
+    .combined-stat span{display:block;color:rgba(255,255,255,.62);font-size:10px;font-weight:800;text-transform:uppercase;margin-bottom:4px}
+    .combined-stat strong{font-size:15px}
+    .budget-wrap{margin-top:13px}.budget-track{height:8px;background:rgba(255,255,255,.12);border-radius:99px;overflow:hidden}
+    .budget-fill{height:100%;background:linear-gradient(90deg,#34D399,#FBBF24,#F87171);width:0%}
+    .budget-meta{display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.62);margin-top:6px}
+    .card{background:var(--card);border:1px solid rgba(231,234,240,.85);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .section-head{display:flex;align-items:center;justify-content:space-between;margin:20px 2px 10px}.section-head h2{font-size:18px;margin:0}
+    .linkbtn{border:0;background:transparent;color:var(--purple);font-weight:900;font-size:13px;padding:6px}
+    .chart{height:170px;display:flex;align-items:end;gap:8px;padding-top:10px}.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+    .bar{width:100%;max-width:28px;background:linear-gradient(180deg,#A78BFA,var(--purple));border-radius:9px 9px 5px 5px;min-height:4px;transition:.25s}
+    .bar-label{font-size:10px;color:var(--muted)}
+    .categories{display:flex;flex-direction:column;gap:12px}.cat-row{display:grid;grid-template-columns:32px 1fr auto;align-items:center;gap:10px}
+    .cat-icon{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:#F3F4F6}
+    .cat-name{font-weight:900;font-size:13px}.cat-bar{height:6px;background:#EEF0F4;border-radius:99px;overflow:hidden;margin-top:5px}
+    .cat-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--purple),var(--blue))}.cat-amt{font-weight:950;font-size:13px}
+    .tx-list{display:flex;flex-direction:column;gap:10px}.tx{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+    .tx:last-child{border-bottom:0}.tx-icon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:#F3F4F6;font-size:18px}
+    .tx-title{font-weight:900;font-size:14px}.tx-meta{font-size:11px;color:var(--muted);margin-top:3px}.tx-amt{font-size:14px;font-weight:950}
+    .empty{padding:24px 8px;text-align:center;color:var(--muted);font-size:13px}
+    .insight{background:linear-gradient(135deg,#F5F3FF,#EEF2FF);border:1px solid #E9E5FF}.insight strong{display:block;font-size:14px;margin-bottom:5px}.insight p{font-size:12px;line-height:1.45;color:#4B5563;margin:0}
+    .fab{position:fixed;right:20px;bottom:calc(82px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:19px;border:0;background:linear-gradient(135deg,var(--purple),#4F46E5);color:#fff;font-size:32px;box-shadow:0 16px 30px rgba(124,58,237,.35);z-index:20;cursor:pointer}
+    .nav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(620px,100%);height:72px;padding:8px 16px calc(8px + env(safe-area-inset-bottom));background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-top:1px solid rgba(231,234,240,.8);display:grid;grid-template-columns:repeat(3,1fr);z-index:15}
+    .nav button{border:0;background:transparent;color:var(--muted);font-size:11px;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}.nav button.active{color:var(--purple)}.nav .ico{font-size:20px}
+    .view{display:none}.view.active{display:block}.filters{display:flex;gap:8px;overflow:auto;padding:2px 0 10px;scrollbar-width:none}
+    .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;white-space:nowrap}.chip.active{background:#111827;color:#fff;border-color:#111827}
+    .modal{position:fixed;inset:0;background:rgba(15,23,42,.42);backdrop-filter:blur(7px);display:none;align-items:flex-end;z-index:40}.modal.show{display:flex}
+    .sheet{width:min(620px,100%);margin:0 auto;background:#fff;border-radius:28px 28px 0 0;padding:12px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -18px 50px rgba(15,23,42,.18);max-height:90vh;overflow:auto}
+    .grab{width:42px;height:5px;border-radius:9px;background:#D1D5DB;margin:4px auto 14px}.sheet h2{margin:0 0 16px;font-size:22px}
+    .field{margin:12px 0}.field label{display:block;font-size:12px;font-weight:900;color:#374151;margin-bottom:7px}
+    .input{width:100%;border:1px solid var(--line);background:#F9FAFB;border-radius:14px;padding:13px 14px;outline:none}.input:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(124,58,237,.10)}
+    .person-toggle,.need-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px}.need-toggle{grid-template-columns:repeat(3,1fr)}
+    .seg{border:1px solid var(--line);background:#fff;border-radius:14px;padding:11px 8px;font-weight:900;font-size:12px}.seg.active{background:#111827;color:#fff;border-color:#111827}
+    .primary{width:100%;border:0;border-radius:15px;padding:14px;background:linear-gradient(135deg,var(--purple),#4F46E5);color:#fff;font-weight:950;margin-top:8px}
+    .danger{border:0;background:#FEF2F2;color:#B91C1C;border-radius:12px;padding:9px 11px;font-size:12px;font-weight:900}.ghost{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:9px 11px;font-size:12px;font-weight:900}
+    .split-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   </style>
 </head>
 <body>
-<div class="app">
-  <div class="top">
-    <div class="brand">
-      <h1>Shirley</h1>
-      <p>Dilo. Ordénalo. Prepáralo.</p>
+  <main class="app">
+    <section id="home" class="view active">
+      <div class="topbar">
+        <div><div class="eyebrow">Gastos compartidos</div><h1>Sara & David</h1></div>
+        <div class="avatar-group"><div class="avatar saraA">S</div><div class="avatar davidA">D</div></div>
+      </div>
+
+      <div class="people-grid">
+        <article class="person-card sara">
+          <div class="person-name">Sara</div>
+          <div class="person-main-label">Hoy</div>
+          <div class="person-main" id="saraToday">0,00 €</div>
+          <div class="person-mini">
+            <div><span>Semana</span><strong id="saraWeek">0,00 €</strong></div>
+            <div><span>Mes</span><strong id="saraMonth">0,00 €</strong></div>
+          </div>
+        </article>
+
+        <article class="person-card david">
+          <div class="person-name">David</div>
+          <div class="person-main-label">Hoy</div>
+          <div class="person-main" id="davidToday">0,00 €</div>
+          <div class="person-mini">
+            <div><span>Semana</span><strong id="davidWeek">0,00 €</strong></div>
+            <div><span>Mes</span><strong id="davidMonth">0,00 €</strong></div>
+          </div>
+        </article>
+      </div>
+
+      <section class="combined">
+        <div class="combined-head">
+          <div class="combined-title">Total de ambos</div>
+          <div class="combined-sub">Sara + David</div>
+        </div>
+        <div class="combined-grid">
+          <div class="combined-stat"><span>Hoy</span><strong id="todayTotal">0,00 €</strong></div>
+          <div class="combined-stat"><span>Semana</span><strong id="weekTotal">0,00 €</strong></div>
+          <div class="combined-stat"><span>Mes</span><strong id="monthTotal">0,00 €</strong></div>
+        </div>
+        <div class="budget-wrap">
+          <div class="budget-track"><div class="budget-fill" id="budgetFill"></div></div>
+          <div class="budget-meta"><span>Presupuesto mensual</span><span id="budgetText">0 / 1.500 €</span></div>
+        </div>
+      </section>
+
+      <div class="section-head"><h2>Ritmo semanal</h2><button class="linkbtn" id="goSummary">Ver resumen</button></div>
+      <div class="card"><div class="chart" id="weekChart"></div></div>
+
+      <div class="section-head"><h2>En qué se va el dinero</h2></div>
+      <div class="card"><div class="categories" id="topCategories"></div></div>
+
+      <div class="section-head"><h2>Últimos gastos</h2><button class="linkbtn" id="goExpenses">Ver todos</button></div>
+      <div class="card"><div class="tx-list" id="recentList"></div></div>
+
+      <div class="section-head"><h2>Lectura rápida</h2></div>
+      <div class="card insight" id="insightBox"><strong>Todo bajo control</strong><p>Añade algunos gastos y aquí verás una lectura sencilla de cómo va el mes.</p></div>
+    </section>
+
+    <section id="expenses" class="view">
+      <div class="topbar"><div><div class="eyebrow">Historial</div><h1>Todos los gastos</h1></div></div>
+      <div class="filters">
+        <button class="chip active" data-filter="all">Todos</button>
+        <button class="chip" data-filter="Sara">Sara</button>
+        <button class="chip" data-filter="David">David</button>
+        <button class="chip" data-filter="Necesario">Necesario</button>
+        <button class="chip" data-filter="Prescindible">Prescindible</button>
+        <button class="chip" data-filter="Capricho">Capricho</button>
+      </div>
+      <div class="card"><div class="tx-list" id="allList"></div></div>
+    </section>
+
+    <section id="summary" class="view">
+      <div class="topbar"><div><div class="eyebrow">Resumen</div><h1>Este mes</h1></div></div>
+      <div class="card" style="margin-bottom:12px"><h3>Distribución por necesidad</h3><div class="categories" id="needSummary"></div></div>
+      <div class="card" style="margin-bottom:12px">
+        <h3>Presupuesto mensual</h3>
+        <div class="field"><label>Presupuesto conjunto (€)</label><input id="budgetInput" class="input" type="number" min="0" step="50"></div>
+        <button class="primary" id="saveBudgetBtn">Guardar presupuesto</button>
+      </div>
+      <div class="card">
+        <h3>Copia de seguridad</h3>
+        <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:0">Mientras esta versión sea local, puedes exportar o importar los datos. Al subirla y conectarla a una base de datos, ambos móviles verán los mismos gastos.</p>
+        <div class="split-actions"><button class="ghost" id="exportBtn">Exportar</button><button class="ghost" id="importBtn">Importar</button></div>
+        <input id="importFile" type="file" accept="application/json" hidden>
+        <button class="danger" style="width:100%;margin-top:10px" id="clearBtn">Borrar todos los datos</button>
+      </div>
+    </section>
+  </main>
+
+  <button class="fab" id="addBtn" aria-label="Añadir gasto">+</button>
+
+  <nav class="nav">
+    <button class="active" data-view="home"><span class="ico">⌂</span>Inicio</button>
+    <button data-view="expenses"><span class="ico">≡</span>Gastos</button>
+    <button data-view="summary"><span class="ico">◔</span>Resumen</button>
+  </nav>
+
+  <div class="modal" id="modal">
+    <div class="sheet">
+      <div class="grab"></div>
+      <h2>Nuevo gasto</h2>
+      <div class="field">
+        <label>¿Quién ha pagado?</label>
+        <div class="person-toggle">
+          <button class="seg active" type="button" data-person="Sara">Sara</button>
+          <button class="seg" type="button" data-person="David">David</button>
+        </div>
+      </div>
+      <div class="field"><label>Concepto</label><input id="concept" class="input" placeholder="Ej. Mercadona, gasolina, Netflix..." maxlength="60"></div>
+      <div class="field"><label>Importe (€)</label><input id="amountInput" class="input" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00"></div>
+      <div class="field">
+        <label>Categoría</label>
+        <select id="categoryInput" class="input">
+          <option>Casa</option><option>Comida</option><option>Coche</option><option>Ocio</option><option>Suscripciones</option><option>Salud</option><option>Compras</option><option>Perros</option><option>Otros</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tipo de gasto</label>
+        <div class="need-toggle">
+          <button class="seg active" type="button" data-need="Necesario">Necesario</button>
+          <button class="seg" type="button" data-need="Prescindible">Prescindible</button>
+          <button class="seg" type="button" data-need="Capricho">Capricho</button>
+        </div>
+      </div>
+      <button class="primary" type="button" id="saveExpenseBtn">Guardar gasto</button>
     </div>
-    <div class="counter"><div><div id="readyPct">0%</div><small>LISTO</small></div></div>
   </div>
-
-  <div class="composer">
-    <textarea id="input" placeholder="Ej.: comprar champú, preparar cargadores, ya tengo las camisetas..."></textarea>
-    <div class="composer-row">
-      <button id="voiceBtn" class="voice" aria-label="Dictar">🎙️</button>
-      <select id="categorySelect"></select>
-      <button id="addBtn" class="add">Añadir</button>
-    </div>
-    <div id="voiceHint" class="hint">Puedes decir varias cosas seguidas. Shirley intentará separarlas automáticamente.</div>
-  </div>
-
-  <div class="filters" id="filters"></div>
-
-  <div class="summary">
-    <div class="stat buy"><b id="countBuy">0</b><span>Comprar</span></div>
-    <div class="stat bought"><b id="countBought">0</b><span>Comprado</span></div>
-    <div class="stat ready"><b id="countReady">0</b><span>Preparado</span></div>
-  </div>
-
-  <div class="section-title" id="listTitle">Todo</div>
-  <div id="list" class="list"></div>
-</div>
-
-<div class="bottom">
-  <div class="bottom-inner">
-    <button class="active" data-mode="all">Todo</button>
-    <button data-mode="buy">Comprar</button>
-    <button data-mode="ready">Preparado</button>
-    <button id="settingsBtn">Categorías</button>
-  </div>
-</div>
-
-<div id="sheet" class="sheet">
-  <div class="sheet-card">
-    <h3>Categorías</h3>
-    <div class="cat-grid" id="categoryManager"></div>
-    <div class="small-note">Toca una categoría para usarla. Puedes crear categorías nuevas desde el botón “+ Nueva”.</div>
-  </div>
-</div>
 
 <script>
-const DEFAULT_CATS = ["Ropa","Aseo","Tecnología","Documentos","Comida","Casa","Viaje","Otros"];
-const key="shirley-data-v1";
-let state = JSON.parse(localStorage.getItem(key)||"null") || {
-  items: [
-    {id:crypto.randomUUID(), text:"Cargador del móvil", category:"Tecnología", status:"buy"},
-    {id:crypto.randomUUID(), text:"Neceser", category:"Aseo", status:"bought"},
-    {id:crypto.randomUUID(), text:"DNI / documentación", category:"Documentos", status:"ready"}
-  ],
-  cats:[...DEFAULT_CATS],
-  filter:"Todas",
-  mode:"all"
-};
+(function(){
+  'use strict';
 
-const input=document.querySelector("#input"), list=document.querySelector("#list");
-const categorySelect=document.querySelector("#categorySelect"), filters=document.querySelector("#filters");
-const sheet=document.querySelector("#sheet"), categoryManager=document.querySelector("#categoryManager");
+  const $ = (id) => document.getElementById(id);
+  const KEY='sara_david_expenses_v2';
+  const OLD_KEY='sara_david_expenses_v1';
+  const BUDGET_KEY='sara_david_budget_v1';
 
-function save(){ localStorage.setItem(key,JSON.stringify(state)); render(); }
-function esc(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+  let expenses = [];
+  let budget = 1500;
+  let selectedPerson='Sara';
+  let selectedNeed='Necesario';
+  let currentFilter='all';
 
-function inferCategory(text){
- const t=text.toLowerCase();
- const maps=[
-  ["Aseo",["champú","gel","cepillo","dientes","pasta","desodorante","toalla","afeit","crema"]],
-  ["Tecnología",["cargador","móvil","iphone","cable","batería","powerbank","auriculares","portátil","tablet"]],
-  ["Documentos",["dni","pasaporte","document","billete","reserva","tarjeta","seguro"]],
-  ["Ropa",["camiseta","pantalón","calcet","ropa","chaqueta","zapatos","zapatillas","bañador","vestido"]],
-  ["Comida",["agua","comida","snack","bocadillo","fruta","bebida"]],
-  ["Casa",["llaves","basura","persiana","ventana","puerta","planta"]],
-  ["Viaje",["maleta","mochila","hotel","vuelo","avión","tren","coche"]]
- ];
- for(const [c,words] of maps) if(words.some(w=>t.includes(w))) return c;
- return categorySelect.value || "Otros";
-}
+  function storageGet(key){
+    try { return localStorage.getItem(key); } catch(e){ return null; }
+  }
+  function storageSet(key,val){
+    try { localStorage.setItem(key,val); return true; } catch(e){ return false; }
+  }
 
-function inferStatus(text){
- const t=text.toLowerCase();
- if(/(ya tengo|comprado|comprada|ya compré|lo tengo)/.test(t)) return "bought";
- if(/(preparado|preparada|ya está|metido|guardado|listo|lista)/.test(t)) return "ready";
- return "buy";
-}
+  try {
+    expenses = JSON.parse(storageGet(KEY) || storageGet(OLD_KEY) || '[]');
+    if(!Array.isArray(expenses)) expenses=[];
+  } catch(e){ expenses=[]; }
+  budget = Number(storageGet(BUDGET_KEY) || '1500') || 1500;
 
-function cleanText(text){
- return text
-  .replace(/^(comprar|compra|preparar|prepara|ya tengo|tengo que comprar|he comprado|comprado|preparado|meter|guardar)\s+/i,"")
-  .replace(/[.]+$/,"").trim();
-}
+  const money = (v) => new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}).format(Number(v)||0);
+  const icons = {Casa:'🏠',Comida:'🛒',Coche:'🚗',Ocio:'🎉',Suscripciones:'📱',Salud:'💊',Compras:'🛍️',Perros:'🐶',Otros:'•'};
+  const needColors={Necesario:'#10B981',Prescindible:'#F59E0B',Capricho:'#EF4444'};
 
-function parseItems(raw){
- let parts = raw
-  .replace(/\n/g,",")
-  .split(/,|;|\by\b(?=\s+(?:comprar|preparar|meter|guardar|llevar|ya|el|la|los|las|un|una))/i)
-  .map(s=>s.trim()).filter(Boolean);
- if(parts.length===1 && raw.trim().split(" ").length<10) parts=[raw.trim()];
- return parts.map(p=>({
-   id:crypto.randomUUID(),
-   text:cleanText(p),
-   category:inferCategory(p),
-   status:inferStatus(p)
- })).filter(x=>x.text);
-}
+  function localYMD(d=new Date()){
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+  function parseDate(s){ const d=new Date(s); return isNaN(d) ? new Date() : d; }
+  function startOfWeek(){
+    const x=new Date(); x.setHours(0,0,0,0);
+    const offset=(x.getDay()+6)%7; x.setDate(x.getDate()-offset); return x;
+  }
+  function isToday(s){ return localYMD(parseDate(s))===localYMD(); }
+  function isWeek(s){ return parseDate(s)>=startOfWeek(); }
+  function isMonth(s){ const d=parseDate(s), n=new Date(); return d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear(); }
+  function sum(arr){ return arr.reduce((t,e)=>t+Number(e.amount||0),0); }
 
-function addFromInput(){
- const raw=input.value.trim(); if(!raw)return;
- state.items.unshift(...parseItems(raw));
- input.value="";
- save();
-}
-document.querySelector("#addBtn").onclick=addFromInput;
-input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();addFromInput()}});
+  function render(){
+    const today=expenses.filter(e=>isToday(e.date));
+    const week=expenses.filter(e=>isWeek(e.date));
+    const month=expenses.filter(e=>isMonth(e.date));
 
-function statusLabel(s){return s==="buy"?"Comprar":s==="bought"?"Comprado":"Preparado"}
-function nextStatus(s){return s==="buy"?"bought":s==="bought"?"ready":"buy"}
+    const saraToday=sum(today.filter(e=>e.person==='Sara'));
+    const davidToday=sum(today.filter(e=>e.person==='David'));
+    const saraWeek=sum(week.filter(e=>e.person==='Sara'));
+    const davidWeek=sum(week.filter(e=>e.person==='David'));
+    const saraMonth=sum(month.filter(e=>e.person==='Sara'));
+    const davidMonth=sum(month.filter(e=>e.person==='David'));
 
-function render(){
- categorySelect.innerHTML=state.cats.map(c=>`<option ${c==="Otros"?"selected":""}>${esc(c)}</option>`).join("");
- filters.innerHTML=["Todas",...state.cats].map(c=>`<button class="chip ${state.filter===c?"active":""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
- filters.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{state.filter=b.dataset.cat;save()});
+    $('saraToday').textContent=money(saraToday);
+    $('davidToday').textContent=money(davidToday);
+    $('saraWeek').textContent=money(saraWeek);
+    $('davidWeek').textContent=money(davidWeek);
+    $('saraMonth').textContent=money(saraMonth);
+    $('davidMonth').textContent=money(davidMonth);
 
- let visible=state.items.filter(i=>state.filter==="Todas"||i.category===state.filter);
- if(state.mode==="buy") visible=visible.filter(i=>i.status==="buy");
- if(state.mode==="ready") visible=visible.filter(i=>i.status==="ready");
+    const tt=sum(today), wt=sum(week), mt=sum(month);
+    $('todayTotal').textContent=money(tt);
+    $('weekTotal').textContent=money(wt);
+    $('monthTotal').textContent=money(mt);
 
- document.querySelector("#listTitle").textContent = state.filter==="Todas" ? (state.mode==="all"?"Todo":state.mode==="buy"?"Por comprar":"Preparado") : state.filter;
- list.innerHTML=visible.length?visible.map(i=>`
- <div class="item">
-  <div class="item-main">
-    <div class="item-title">${esc(i.text)}</div>
-    <div class="meta"><span class="badge">${esc(i.category)}</span></div>
-    <div class="actions">
-      <button class="mini" data-edit="${i.id}">Editar</button>
-      <button class="mini danger" data-del="${i.id}">Eliminar</button>
-    </div>
-  </div>
-  <button class="status ${i.status}" data-status="${i.id}">${statusLabel(i.status)}</button>
- </div>`).join(""):`<div class="empty">No hay nada aquí todavía.<br><br>🎙️ Dicta una nota o añade algo manualmente.</div>`;
+    const pct=budget ? Math.min((mt/budget)*100,100) : 0;
+    $('budgetFill').style.width=pct+'%';
+    $('budgetText').textContent=`${Math.round(mt)} / ${Math.round(budget)} €`;
+    $('budgetInput').value=budget;
 
- list.querySelectorAll("[data-status]").forEach(b=>b.onclick=()=>{
-   const it=state.items.find(x=>x.id===b.dataset.status); it.status=nextStatus(it.status); save();
- });
- list.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
-   state.items=state.items.filter(x=>x.id!==b.dataset.del); save();
- });
- list.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{
-   const it=state.items.find(x=>x.id===b.dataset.edit);
-   const v=prompt("Editar elemento",it.text);
-   if(v&&v.trim()){it.text=v.trim(); it.category=inferCategory(v); save();}
- });
+    renderWeekChart();
+    renderCategories(month);
+    renderTransactions($('recentList'), expenses.slice().sort((a,b)=>parseDate(b.date)-parseDate(a.date)).slice(0,5), false);
+    renderAll();
+    renderNeeds(month);
+    renderInsight(month, mt);
+  }
 
- const cb=state.items.filter(i=>i.status==="buy").length;
- const cbt=state.items.filter(i=>i.status==="bought").length;
- const cr=state.items.filter(i=>i.status==="ready").length;
- document.querySelector("#countBuy").textContent=cb;
- document.querySelector("#countBought").textContent=cbt;
- document.querySelector("#countReady").textContent=cr;
- document.querySelector("#readyPct").textContent=state.items.length?Math.round(cr/state.items.length*100)+"%":"0%";
+  function renderWeekChart(){
+    const labels=['L','M','X','J','V','S','D'], start=startOfWeek(), vals=[];
+    for(let i=0;i<7;i++){
+      const d=new Date(start); d.setDate(start.getDate()+i);
+      const key=localYMD(d);
+      vals.push(sum(expenses.filter(e=>localYMD(parseDate(e.date))===key)));
+    }
+    const max=Math.max(...vals,1);
+    $('weekChart').innerHTML=vals.map((v,i)=>`<div class="bar-wrap"><div class="bar" style="height:${Math.max(4,v/max*130)}px"></div><div class="bar-label">${labels[i]}</div></div>`).join('');
+  }
 
- document.querySelectorAll(".bottom [data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===state.mode));
- renderCats();
-}
+  function renderCategories(month){
+    const map={};
+    month.forEach(e=>map[e.category]=(map[e.category]||0)+Number(e.amount));
+    const items=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,4);
+    const max=items[0]?.[1]||1;
+    $('topCategories').innerHTML=items.length ? items.map(([k,v])=>`
+      <div class="cat-row"><div class="cat-icon">${icons[k]||'•'}</div>
+      <div><div class="cat-name">${escapeHtml(k)}</div><div class="cat-bar"><div class="cat-fill" style="width:${v/max*100}%"></div></div></div>
+      <div class="cat-amt">${money(v)}</div></div>`).join('') : '<div class="empty">Aún no hay gastos este mes.</div>';
+  }
 
-document.querySelectorAll(".bottom [data-mode]").forEach(b=>b.onclick=()=>{state.mode=b.dataset.mode;save()});
-document.querySelector("#settingsBtn").onclick=()=>sheet.classList.add("open");
-sheet.onclick=e=>{if(e.target===sheet)sheet.classList.remove("open")};
+  function renderTransactions(el,data,withDelete){
+    el.innerHTML=data.length ? data.map(e=>`
+      <div class="tx">
+        <div class="tx-icon">${icons[e.category]||'•'}</div>
+        <div><div class="tx-title">${escapeHtml(e.concept)}</div>
+        <div class="tx-meta">${escapeHtml(e.person)} · ${escapeHtml(e.category)} · ${escapeHtml(e.need)} · ${parseDate(e.date).toLocaleDateString('es-ES',{day:'2-digit',month:'short'})}</div></div>
+        <div style="text-align:right"><div class="tx-amt">${money(e.amount)}</div>${withDelete?`<button class="danger delete-expense" data-id="${e.id}" style="margin-top:6px;padding:5px 8px">Borrar</button>`:''}</div>
+      </div>`).join('') : '<div class="empty">No hay gastos todavía. Pulsa + para añadir el primero.</div>';
 
-function renderCats(){
- categoryManager.innerHTML=state.cats.map(c=>`<button class="cat-btn" data-use="${esc(c)}">${esc(c)}</button>`).join("")+
- `<button class="cat-btn" id="newCat">＋ Nueva</button>`;
- categoryManager.querySelectorAll("[data-use]").forEach(b=>b.onclick=()=>{
-   categorySelect.value=b.dataset.use; sheet.classList.remove("open");
- });
- const n=document.querySelector("#newCat");
- if(n)n.onclick=()=>{
-   const c=prompt("Nombre de la categoría");
-   if(c&&c.trim()&&!state.cats.includes(c.trim())){state.cats.push(c.trim());save();}
- };
-}
+    if(withDelete){
+      el.querySelectorAll('.delete-expense').forEach(btn=>btn.addEventListener('click',()=>{
+        expenses=expenses.filter(e=>String(e.id)!==String(btn.dataset.id)); persist(); render();
+      }));
+    }
+  }
 
-// Speech recognition
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const voiceBtn=document.querySelector("#voiceBtn");
-const voiceHint=document.querySelector("#voiceHint");
-if(SpeechRecognition){
- const rec=new SpeechRecognition();
- rec.lang="es-ES"; rec.interimResults=true; rec.continuous=false;
- rec.onstart=()=>{voiceBtn.classList.add("listening"); voiceHint.textContent="Escuchando… habla con naturalidad."};
- rec.onresult=e=>{
-   let txt="";
-   for(let i=e.resultIndex;i<e.results.length;i++) txt+=e.results[i][0].transcript;
-   input.value=txt;
- };
- rec.onend=()=>{voiceBtn.classList.remove("listening");voiceHint.textContent="Revisa el texto y pulsa Añadir."; if(input.value.trim()) addFromInput();};
- rec.onerror=e=>{voiceBtn.classList.remove("listening"); voiceHint.textContent="No he podido usar el micrófono. Puedes escribir la nota manualmente."};
- voiceBtn.onclick=()=>rec.start();
-}else{
- voiceBtn.onclick=()=>alert("El dictado web no está disponible en este navegador. En iPhone puedes usar el micrófono del teclado para dictar.");
- voiceHint.textContent="En iPhone puedes dictar usando el micrófono del teclado.";
-}
-render();
+  function renderAll(){
+    let data=expenses.slice().sort((a,b)=>parseDate(b.date)-parseDate(a.date));
+    if(currentFilter!=='all') data=data.filter(e=>e.person===currentFilter || e.need===currentFilter);
+    renderTransactions($('allList'),data,true);
+  }
+
+  function renderNeeds(month){
+    const total=sum(month)||1;
+    $('needSummary').innerHTML=['Necesario','Prescindible','Capricho'].map(n=>{
+      const v=sum(month.filter(e=>e.need===n));
+      return `<div class="cat-row"><div class="cat-icon" style="background:${needColors[n]}18"><span style="width:10px;height:10px;border-radius:50%;background:${needColors[n]};display:block"></span></div>
+      <div><div class="cat-name">${n}</div><div class="cat-bar"><div class="cat-fill" style="width:${v/total*100}%;background:${needColors[n]}"></div></div></div>
+      <div class="cat-amt">${money(v)}</div></div>`;
+    }).join('');
+  }
+
+  function renderInsight(month, mt){
+    if(!month.length){ $('insightBox').innerHTML='<strong>Todo bajo control</strong><p>Añade algunos gastos y aquí verás una lectura sencilla de cómo va el mes.</p>'; return; }
+    const cap=sum(month.filter(e=>e.need==='Capricho'));
+    const pres=sum(month.filter(e=>e.need==='Prescindible'));
+    const cats={}; month.forEach(e=>cats[e.category]=(cats[e.category]||0)+Number(e.amount));
+    const top=Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
+    const rem=Math.max(budget-mt,0);
+    let t=`La categoría con más gasto es <b>${escapeHtml(top[0])}</b> (${money(top[1])}). `;
+    t+=`Entre prescindible y capricho lleváis ${money(pres+cap)}. `;
+    t+=mt>budget ? `Habéis superado el presupuesto mensual en ${money(mt-budget)}.` : `Quedan ${money(rem)} hasta el presupuesto mensual.`;
+    $('insightBox').innerHTML=`<strong>Lectura rápida del mes</strong><p>${t}</p>`;
+  }
+
+  function persist(){ storageSet(KEY,JSON.stringify(expenses)); }
+
+  function openModal(){
+    $('modal').classList.add('show');
+    setTimeout(()=>{ try{$('concept').focus();}catch(e){} },120);
+  }
+  function closeModal(){ $('modal').classList.remove('show'); }
+
+  function addExpense(){
+    const concept=$('concept').value.trim();
+    const raw=String($('amountInput').value).replace(',','.');
+    const amount=Number(raw);
+    if(!concept){ alert('Escribe qué gasto ha sido.'); return; }
+    if(!Number.isFinite(amount) || amount<=0){ alert('Escribe un importe válido.'); return; }
+
+    expenses.push({
+      id: 'g_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+      person:selectedPerson,
+      concept,
+      amount,
+      category:$('categoryInput').value,
+      need:selectedNeed,
+      date:new Date().toISOString()
+    });
+
+    persist();
+    $('concept').value='';
+    $('amountInput').value='';
+    $('categoryInput').value='Casa';
+    closeModal();
+    switchView('home');
+    render();
+  }
+
+  function switchView(id){
+    document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
+    document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function saveBudget(){
+    budget=Math.max(0,Number($('budgetInput').value)||0);
+    storageSet(BUDGET_KEY,String(budget)); render(); alert('Presupuesto guardado.');
+  }
+
+  function exportData(){
+    const blob=new Blob([JSON.stringify({expenses,budget,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='gastos-sara-david.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }
+
+  function importData(file){
+    if(!file) return;
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const data=JSON.parse(r.result);
+        if(!Array.isArray(data.expenses)) throw new Error();
+        expenses=data.expenses; budget=Number(data.budget||1500);
+        persist(); storageSet(BUDGET_KEY,String(budget)); render(); alert('Datos importados correctamente.');
+      }catch(e){ alert('Ese archivo no parece una copia válida.'); }
+    };
+    r.readAsText(file);
+  }
+
+  function clearData(){
+    if(confirm('¿Seguro que quieres borrar todos los gastos guardados en este dispositivo?')){ expenses=[]; persist(); render(); }
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  }
+
+  // Events
+  $('addBtn').addEventListener('click',openModal);
+  $('saveExpenseBtn').addEventListener('click',addExpense);
+  $('modal').addEventListener('click',e=>{ if(e.target===$('modal')) closeModal(); });
+  $('goSummary').addEventListener('click',()=>switchView('summary'));
+  $('goExpenses').addEventListener('click',()=>switchView('expenses'));
+  $('saveBudgetBtn').addEventListener('click',saveBudget);
+  $('exportBtn').addEventListener('click',exportData);
+  $('importBtn').addEventListener('click',()=>$('importFile').click());
+  $('importFile').addEventListener('change',e=>{ importData(e.target.files[0]); e.target.value=''; });
+  $('clearBtn').addEventListener('click',clearData);
+
+  document.querySelectorAll('.nav button').forEach(btn=>btn.addEventListener('click',()=>switchView(btn.dataset.view)));
+  document.querySelectorAll('[data-person]').forEach(btn=>btn.addEventListener('click',()=>{
+    selectedPerson=btn.dataset.person;
+    document.querySelectorAll('[data-person]').forEach(b=>b.classList.toggle('active',b===btn));
+  }));
+  document.querySelectorAll('[data-need]').forEach(btn=>btn.addEventListener('click',()=>{
+    selectedNeed=btn.dataset.need;
+    document.querySelectorAll('[data-need]').forEach(b=>b.classList.toggle('active',b===btn));
+  }));
+  document.querySelectorAll('.chip').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); currentFilter=btn.dataset.filter; renderAll();
+  }));
+
+  // Pressing Enter on amount saves quickly on mobile.
+  $('amountInput').addEventListener('keydown',e=>{ if(e.key==='Enter') addExpense(); });
+
+  render();
+})();
 </script>
 </body>
 </html>
