@@ -179,9 +179,35 @@
     .expense-period-meta{font-size:10px;color:var(--muted);font-weight:800;margin-top:9px;text-align:center}
     .clear-date-btn{border:0;background:transparent;color:var(--purple);font-weight:900;font-size:11px;padding:6px 0 0;display:none;margin-left:auto}
     .clear-date-btn.show{display:block}
+
+    /* Sincronización compartida */
+    .sync-row{display:flex;justify-content:flex-end;margin:-3px 2px 9px}
+    .sync-badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900;background:#EEF2FF;color:#4F46E5;border:1px solid #E0E7FF}
+    .sync-badge.ok{background:#ECFDF5;color:#047857;border-color:#D1FAE5}
+    .sync-badge.error{background:#FEF2F2;color:#B91C1C;border-color:#FEE2E2}
+    .sync-badge.syncing{background:#FFFBEB;color:#B45309;border-color:#FEF3C7}
+    .cloud-lock{position:fixed;inset:0;z-index:100;background:rgba(246,247,251,.97);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;padding:24px}
+    .cloud-lock.hidden{display:none}
+    .lock-card{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:28px;box-shadow:0 24px 70px rgba(17,24,39,.18);padding:24px;text-align:center}
+    .lock-icon{width:64px;height:64px;border-radius:20px;margin:0 auto 14px;display:grid;place-items:center;font-size:30px;background:linear-gradient(135deg,#F5F3FF,#EFF6FF)}
+    .lock-card h2{margin:0 0 8px;font-size:24px}
+    .lock-card p{margin:0 0 16px;color:var(--muted);font-size:13px;line-height:1.45}
+    .lock-input{text-align:center;font-size:22px;font-weight:950;letter-spacing:.18em}
+    .lock-message{min-height:18px;margin-top:10px;font-size:11px;color:#B91C1C;font-weight:800}
   </style>
 </head>
 <body>
+  <div class="cloud-lock" id="cloudLock">
+    <div class="lock-card">
+      <div class="lock-icon">☁️</div>
+      <h2>Gastos compartidos</h2>
+      <p>Introduce el código común de Sara y David. Solo tendrás que hacerlo una vez en este móvil.</p>
+      <input id="accessCodeInput" class="input lock-input" type="password" inputmode="numeric" autocomplete="one-time-code" placeholder="••••••" maxlength="12">
+      <button class="primary" id="unlockBtn" type="button">Entrar</button>
+      <div class="lock-message" id="accessMessage"></div>
+    </div>
+  </div>
+
   <main class="app">
     <section id="home" class="view active">
       <div class="topbar">
@@ -190,6 +216,7 @@
       </div>
 
       <div class="shared-date" id="sharedDateLabel"></div>
+      <div class="sync-row"><span class="sync-badge syncing" id="cloudStatus">☁ Conectando…</span></div>
       <div class="people-grid">
         <article class="person-card sara">
           <div class="person-name">Sara</div>
@@ -408,6 +435,10 @@
   const KEY='sara_david_expenses_v2';
   const OLD_KEY='sara_david_expenses_v1';
   const BUDGET_KEY='sara_david_budget_v1';
+  const CLOUD_CODE_KEY='sara_david_cloud_code_v1';
+  const CLOUD_MIGRATED_KEY='sara_david_cloud_migrated_v1';
+  const CLOUD_URL='https://gmfvikpcenhnviijcnsc.supabase.co';
+  const CLOUD_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtZnZpa3BjZW5obnZpaWpjbnNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwOTU2MzksImV4cCI6MjEwNjY3MTYzOX0.--6son_Xk4OQu6uGEelQvmLq2rq8GhXyYmgiddsc_as';
 
   let expenses = [];
   let budget = 1500;
@@ -416,6 +447,9 @@
   let currentFilter='all';
   let expenseDateMode='all';
   let selectedYear=new Date().getFullYear();
+  let appCode='';
+  let cloudReady=false;
+  let cloudSyncing=false;
 
   function storageGet(key){
     try { return localStorage.getItem(key); } catch(e){ return null; }
@@ -423,6 +457,8 @@
   function storageSet(key,val){
     try { localStorage.setItem(key,val); return true; } catch(e){ return false; }
   }
+
+  appCode=storageGet(CLOUD_CODE_KEY) || '';
 
   try {
     expenses = JSON.parse(storageGet(KEY) || storageGet(OLD_KEY) || '[]');
@@ -433,6 +469,164 @@
   const money = (v) => new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}).format(Number(v)||0);
   const icons = {Casa:'🏠',Comida:'🛒',Alimentación:'🛒',Coche:'🚗',Transporte:'🚗',Ocio:'🎉',Suscripciones:'📱',Salud:'💊',Compras:'🛍️',Perros:'🐶',Otros:'•'};
   const needColors={Necesario:'#10B981',Prescindible:'#F59E0B',Capricho:'#EF4444'};
+
+  function setCloudStatus(mode,text){
+    const el=$('cloudStatus');
+    if(!el) return;
+    el.className='sync-badge '+mode;
+    el.textContent=text;
+  }
+
+  function showCloudLock(message=''){
+    $('cloudLock').classList.remove('hidden');
+    $('accessMessage').textContent=message;
+    if(appCode) $('accessCodeInput').value=appCode;
+  }
+
+  function hideCloudLock(){
+    $('cloudLock').classList.add('hidden');
+    $('accessMessage').textContent='';
+  }
+
+  function cloudHeaders(extra={}){
+    return Object.assign({
+      apikey:CLOUD_KEY,
+      Authorization:'Bearer '+CLOUD_KEY,
+      'x-app-code':appCode
+    },extra);
+  }
+
+  async function cloudRequest(endpoint,options={}){
+    const opts=Object.assign({},options);
+    opts.headers=cloudHeaders(options.headers||{});
+    opts.cache='no-store';
+    const res=await fetch(CLOUD_URL+'/rest/v1/'+endpoint,opts);
+    const raw=await res.text();
+    let payload=null;
+    if(raw){
+      try{ payload=JSON.parse(raw); }catch(e){ payload=raw; }
+    }
+    if(!res.ok){
+      const err=new Error((payload && payload.message) || 'No se pudo conectar con los datos compartidos.');
+      err.status=res.status;
+      err.auth=res.status===401 || res.status===403;
+      throw err;
+    }
+    return payload;
+  }
+
+  function normalizeExpense(e){
+    return {
+      id:String(e.id || ('g_'+Date.now()+'_'+Math.random().toString(36).slice(2,8))),
+      person:e.person==='David'?'David':'Sara',
+      concept:String(e.concept || 'Gasto'),
+      amount:Number(e.amount)||0,
+      category:String(e.category || 'Otros'),
+      need:e.need==='Necesidad'?'Necesario':String(e.need || 'Necesario'),
+      date:e.date || new Date().toISOString()
+    };
+  }
+
+  async function upsertCloudExpenses(items){
+    const clean=(items||[]).map(normalizeExpense).filter(e=>e.amount>=0);
+    if(!clean.length) return;
+    await cloudRequest('expenses?on_conflict=id',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        Prefer:'resolution=merge-duplicates,return=minimal'
+      },
+      body:JSON.stringify(clean)
+    });
+  }
+
+  async function saveCloudBudget(value){
+    await cloudRequest('app_settings?on_conflict=id',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        Prefer:'resolution=merge-duplicates,return=minimal'
+      },
+      body:JSON.stringify({id:'shared',budget:Number(value)||0,updated_at:new Date().toISOString()})
+    });
+  }
+
+  async function migrateLocalToCloudOnce(){
+    if(storageGet(CLOUD_MIGRATED_KEY)==='1') return;
+    const localExpenses=expenses.slice().map(normalizeExpense);
+    if(localExpenses.length) await upsertCloudExpenses(localExpenses);
+    const localBudget=Number(storageGet(BUDGET_KEY) || budget || 1500) || 1500;
+    await saveCloudBudget(localBudget);
+    storageSet(CLOUD_MIGRATED_KEY,'1');
+  }
+
+  async function syncFromCloud(showErrors=false){
+    if(!appCode || cloudSyncing) return;
+    cloudSyncing=true;
+    setCloudStatus('syncing','☁ Sincronizando…');
+    try{
+      const settings=await cloudRequest('app_settings?select=id,budget&id=eq.shared&limit=1');
+      if(!Array.isArray(settings) || !settings.length){
+        const err=new Error('Código incorrecto.');
+        err.auth=true;
+        throw err;
+      }
+      const remote=await cloudRequest('expenses?select=id,person,concept,amount,category,need,date&order=date.asc');
+      expenses=Array.isArray(remote) ? remote.map(normalizeExpense) : [];
+      budget=Number(settings[0].budget)||1500;
+      persist();
+      storageSet(BUDGET_KEY,String(budget));
+      cloudReady=true;
+      hideCloudLock();
+      setCloudStatus('ok','☁ Compartido · actualizado');
+      render();
+    }catch(err){
+      cloudReady=false;
+      setCloudStatus('error','☁ Sin conexión');
+      if(err.auth){
+        storageSet(CLOUD_CODE_KEY,'');
+        appCode='';
+        showCloudLock('El código no es correcto.');
+      }else if(showErrors){
+        alert('No se pudieron cargar los datos compartidos. Revisa la conexión e inténtalo de nuevo.');
+      }
+    }finally{
+      cloudSyncing=false;
+    }
+  }
+
+  async function connectCloud(){
+    if(!appCode){
+      showCloudLock();
+      return;
+    }
+    $('unlockBtn').disabled=true;
+    $('accessMessage').textContent='Conectando…';
+    setCloudStatus('syncing','☁ Conectando…');
+    try{
+      const probe=await cloudRequest('app_settings?select=id&id=eq.shared&limit=1');
+      if(!Array.isArray(probe) || !probe.length){
+        const err=new Error('Código incorrecto.');
+        err.auth=true;
+        throw err;
+      }
+      storageSet(CLOUD_CODE_KEY,appCode);
+      await migrateLocalToCloudOnce();
+      await syncFromCloud(true);
+    }catch(err){
+      cloudReady=false;
+      if(err.auth){
+        storageSet(CLOUD_CODE_KEY,'');
+        appCode='';
+        showCloudLock('El código no es correcto.');
+      }else{
+        showCloudLock('No se ha podido conectar. Comprueba Internet y vuelve a intentarlo.');
+      }
+      setCloudStatus('error','☁ Sin conexión');
+    }finally{
+      $('unlockBtn').disabled=false;
+    }
+  }
 
   function localYMD(d=new Date()){
     const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
@@ -535,8 +729,19 @@
       </div>`).join('') : '<div class="empty">No hay gastos todavía. Pulsa + para añadir el primero.</div>';
 
     if(withDelete){
-      el.querySelectorAll('.delete-expense').forEach(btn=>btn.addEventListener('click',()=>{
-        expenses=expenses.filter(e=>String(e.id)!==String(btn.dataset.id)); persist(); render();
+      el.querySelectorAll('.delete-expense').forEach(btn=>btn.addEventListener('click',async()=>{
+        if(!cloudReady){ showCloudLock('Conecta la app para modificar los gastos.'); return; }
+        const id=String(btn.dataset.id);
+        btn.disabled=true;
+        try{
+          await cloudRequest('expenses?id=eq.'+encodeURIComponent(id),{method:'DELETE'});
+          expenses=expenses.filter(e=>String(e.id)!==id);
+          persist();
+          render();
+        }catch(err){
+          alert('No se ha podido borrar el gasto.');
+          await syncFromCloud(false);
+        }
       }));
     }
   }
@@ -788,15 +993,16 @@
   }
   function closeModal(){ $('modal').classList.remove('show'); }
 
-  function addExpense(){
+  async function addExpense(){
     const concept=$('concept').value.trim();
     const raw=String($('amountInput').value).replace(',','.');
     const amount=Number(raw);
     if(!concept){ alert('Escribe qué gasto ha sido.'); return; }
     if(!Number.isFinite(amount) || amount<=0){ alert('Escribe un importe válido.'); return; }
+    if(!cloudReady){ showCloudLock('Conecta la app para guardar el gasto.'); return; }
 
-    expenses.push({
-      id: 'g_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+    const expense=normalizeExpense({
+      id:'g_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
       person:selectedPerson,
       concept,
       amount,
@@ -805,13 +1011,24 @@
       date:new Date().toISOString()
     });
 
-    persist();
-    $('concept').value='';
-    $('amountInput').value='';
-    $('categoryInput').value='Casa';
-    closeModal();
-    switchView('home');
-    render();
+    $('saveExpenseBtn').disabled=true;
+    try{
+      await upsertCloudExpenses([expense]);
+      expenses.push(expense);
+      persist();
+      $('concept').value='';
+      $('amountInput').value='';
+      $('categoryInput').value='Casa';
+      closeModal();
+      switchView('home');
+      render();
+      setCloudStatus('ok','☁ Compartido · guardado');
+    }catch(err){
+      alert('No se ha podido guardar el gasto. Comprueba la conexión.');
+      await syncFromCloud(false);
+    }finally{
+      $('saveExpenseBtn').disabled=false;
+    }
   }
 
   function switchView(id){
@@ -820,9 +1037,22 @@
     window.scrollTo({top:0,behavior:'smooth'});
   }
 
-  function saveBudget(){
-    budget=Math.max(0,Number($('budgetInput').value)||0);
-    storageSet(BUDGET_KEY,String(budget)); render(); alert('Presupuesto guardado.');
+  async function saveBudget(){
+    const nextBudget=Math.max(0,Number($('budgetInput').value)||0);
+    if(!cloudReady){ showCloudLock('Conecta la app para cambiar el presupuesto.'); return; }
+    $('saveBudgetBtn').disabled=true;
+    try{
+      await saveCloudBudget(nextBudget);
+      budget=nextBudget;
+      storageSet(BUDGET_KEY,String(budget));
+      render();
+      setCloudStatus('ok','☁ Compartido · guardado');
+      alert('Presupuesto guardado para los dos.');
+    }catch(err){
+      alert('No se ha podido guardar el presupuesto.');
+    }finally{
+      $('saveBudgetBtn').disabled=false;
+    }
   }
 
   function exportData(){
@@ -833,19 +1063,38 @@
   function importData(file){
     if(!file) return;
     const r=new FileReader();
-    r.onload=()=>{
+    r.onload=async()=>{
       try{
         const data=JSON.parse(r.result);
         if(!Array.isArray(data.expenses)) throw new Error();
-        expenses=data.expenses; budget=Number(data.budget||1500);
-        persist(); storageSet(BUDGET_KEY,String(budget)); render(); alert('Datos importados correctamente.');
-      }catch(e){ alert('Ese archivo no parece una copia válida.'); }
+        if(!cloudReady){ showCloudLock('Conecta la app antes de importar.'); return; }
+
+        const clean=data.expenses.map(normalizeExpense);
+        await upsertCloudExpenses(clean);
+        if(data.budget!==undefined) await saveCloudBudget(Number(data.budget)||1500);
+        storageSet(CLOUD_MIGRATED_KEY,'1');
+        await syncFromCloud(true);
+        alert('Datos importados y compartidos correctamente.');
+      }catch(e){
+        alert('Ese archivo no parece una copia válida o no se ha podido subir.');
+      }
     };
     r.readAsText(file);
   }
 
-  function clearData(){
-    if(confirm('¿Seguro que quieres borrar todos los gastos guardados en este dispositivo?')){ expenses=[]; persist(); render(); }
+  async function clearData(){
+    if(!cloudReady){ showCloudLock('Conecta la app para borrar los gastos.'); return; }
+    if(confirm('¿Seguro que quieres borrar TODOS los gastos compartidos de Sara y David? Esta acción afectará a los dos móviles.')){
+      try{
+        await cloudRequest('expenses?id=not.is.null',{method:'DELETE'});
+        expenses=[];
+        persist();
+        render();
+        setCloudStatus('ok','☁ Compartido · actualizado');
+      }catch(err){
+        alert('No se han podido borrar los gastos.');
+      }
+    }
   }
 
   function escapeHtml(s){
@@ -853,6 +1102,15 @@
   }
 
   // Events
+  $('unlockBtn').addEventListener('click',()=>{
+    appCode=$('accessCodeInput').value.trim();
+    if(!appCode){ $('accessMessage').textContent='Escribe el código compartido.'; return; }
+    connectCloud();
+  });
+  $('accessCodeInput').addEventListener('keydown',e=>{
+    if(e.key==='Enter') $('unlockBtn').click();
+  });
+
   $('addBtn').addEventListener('click',openModal);
   $('saveExpenseBtn').addEventListener('click',addExpense);
   $('modal').addEventListener('click',e=>{ if(e.target===$('modal')) closeModal(); });
@@ -901,6 +1159,21 @@
   $('amountInput').addEventListener('keydown',e=>{ if(e.key==='Enter') addExpense(); });
 
   render();
+  if(appCode){
+    $('accessCodeInput').value=appCode;
+    connectCloud();
+  }else{
+    showCloudLock();
+    setCloudStatus('error','☁ Código requerido');
+  }
+
+  setInterval(()=>{
+    if(cloudReady && !document.hidden) syncFromCloud(false);
+  },5000);
+
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden && cloudReady) syncFromCloud(false);
+  });
 })();
 </script>
 </body>
