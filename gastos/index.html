@@ -163,29 +163,32 @@
     .summary-tools[open]>summary:after{content:"–"}
     .summary-tools-body{padding:0 0 16px}
 
-    /* Filtro de fechas en Gastos */
+    /* Filtros y sumatorios en Gastos */
     .date-filter-card{margin-bottom:12px}
     .date-mode{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
-    .date-mode-btn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 6px;font-size:12px;font-weight:900}
-    .date-mode-btn.active{background:#111827;color:#fff;border-color:#111827}
-    .date-controls{display:grid;grid-template-columns:1fr;gap:9px}
-    .date-controls.range{grid-template-columns:1fr 1fr}
+    .date-mode-btn{border:1px solid var(--line);background:#fff;border-radius:13px;padding:10px 5px;font-size:11px;font-weight:900;min-height:42px}
+    .date-mode-btn.active{background:#111827;color:#fff;border-color:#111827;box-shadow:0 7px 16px rgba(17,24,39,.12)}
     .date-control{display:none}
     .date-control.active{display:block}
+    .range-control{display:none}
     .range-control.active{display:grid;grid-template-columns:1fr 1fr;gap:9px}
     .date-mini-label{display:block;font-size:10px;color:var(--muted);font-weight:900;margin:0 0 5px 2px;text-transform:uppercase;letter-spacing:.04em}
-    .expense-totals{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:8px;margin-top:12px}
-    .expense-total-box{border-radius:15px;padding:11px 9px;background:#F8FAFC;border:1px solid var(--line)}
+    .clear-date-btn{border:0;background:transparent;color:var(--purple);font-weight:900;font-size:11px;padding:8px 0 0;display:none;margin-left:auto}
+    .clear-date-btn.show{display:block}
+    .expense-result-card{margin:10px 0 12px;background:linear-gradient(145deg,#FFFFFF,#F8FAFC)}
+    .expense-main-total{font-size:35px;font-weight:950;letter-spacing:-.05em;margin:2px 0 3px}
+    .expense-period-meta{font-size:10px;color:var(--muted);font-weight:800;margin-bottom:13px}
+    .expense-people-split{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+    .expense-total-box{border-radius:15px;padding:11px 10px;border:1px solid var(--line)}
     .expense-total-box.sara-total{background:#FFF1F6}
     .expense-total-box.david-total{background:#EFF6FF}
-    .expense-total-box.all-total{background:#111827;color:#fff;border-color:#111827}
     .expense-total-box span{display:block;font-size:9px;color:var(--muted);font-weight:900;text-transform:uppercase;margin-bottom:4px}
-    .expense-total-box.all-total span{color:rgba(255,255,255,.62)}
     .expense-total-box strong{font-size:15px;letter-spacing:-.02em}
-    .expense-period-meta{font-size:10px;color:var(--muted);font-weight:800;margin-top:9px;text-align:center}
-    .clear-date-btn{border:0;background:transparent;color:var(--purple);font-weight:900;font-size:11px;padding:6px 0 0;display:none;margin-left:auto}
-    .clear-date-btn.show{display:block}
-
+    .expense-need-split{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+    .expense-need-box{border:1px solid var(--line);border-radius:13px;padding:9px 7px;background:#fff;min-width:0}
+    .expense-need-box span{display:block;font-size:8px;color:var(--muted);font-weight:900;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .expense-need-box strong{display:block;font-size:12px;margin-top:3px}
+    .filter-title{font-size:11px;color:var(--muted);font-weight:900;margin:3px 2px 6px;text-transform:uppercase;letter-spacing:.04em}
     /* Sincronización compartida */
     .sync-row{display:flex;justify-content:flex-end;margin:-3px 2px 9px}
     .sync-badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900;background:#EEF2FF;color:#4F46E5;border:1px solid #E0E7FF}
@@ -278,15 +281,18 @@
       <div class="topbar"><div><div class="eyebrow">Historial</div><h1>Todos los gastos</h1></div></div>
 
       <div class="card date-filter-card">
-        <div class="summary-section-title"><h3>Buscar por fecha</h3><span id="expenseDateLabel">Todo el histórico</span></div>
+        <div class="summary-section-title"><h3>¿Qué periodo quieres ver?</h3><span id="expenseDateLabel">Todo el histórico</span></div>
         <div class="date-mode">
           <button class="date-mode-btn active" type="button" data-date-mode="all">Todo</button>
-          <button class="date-mode-btn" type="button" data-date-mode="day">Fecha</button>
+          <button class="date-mode-btn" type="button" data-date-mode="today">Hoy</button>
+          <button class="date-mode-btn" type="button" data-date-mode="week">Esta semana</button>
+          <button class="date-mode-btn" type="button" data-date-mode="month">Este mes</button>
+          <button class="date-mode-btn" type="button" data-date-mode="day">Día concreto</button>
           <button class="date-mode-btn" type="button" data-date-mode="range">Rango</button>
         </div>
 
         <div class="date-control" id="singleDateControl">
-          <label class="date-mini-label" for="expenseDate">Fecha</label>
+          <label class="date-mini-label" for="expenseDate">Elige el día</label>
           <input id="expenseDate" class="input" type="date">
         </div>
 
@@ -301,16 +307,10 @@
           </div>
         </div>
 
-        <button class="clear-date-btn" id="clearDateFilter" type="button">Limpiar fechas</button>
-
-        <div class="expense-totals">
-          <div class="expense-total-box sara-total"><span>Sara</span><strong id="expenseSaraTotal">0,00 €</strong></div>
-          <div class="expense-total-box david-total"><span>David</span><strong id="expenseDavidTotal">0,00 €</strong></div>
-          <div class="expense-total-box all-total"><span>Total ambos</span><strong id="expenseJointTotal">0,00 €</strong></div>
-        </div>
-        <div class="expense-period-meta" id="expenseResultMeta">0 gastos</div>
+        <button class="clear-date-btn" id="clearDateFilter" type="button">Ver todo el histórico</button>
       </div>
 
+      <div class="filter-title">Filtrar gastos</div>
       <div class="filters">
         <button class="chip active" data-filter="all">Todos</button>
         <button class="chip" data-filter="Sara">Sara</button>
@@ -319,6 +319,24 @@
         <button class="chip" data-filter="Prescindible">Prescindible</button>
         <button class="chip" data-filter="Capricho">Capricho</button>
       </div>
+
+      <div class="card expense-result-card">
+        <div class="summary-section-title"><h3 id="expenseResultTitle">Total seleccionado</h3><span id="expenseFilterLabel">Todos</span></div>
+        <div class="expense-main-total" id="expenseFilteredTotal">0,00 €</div>
+        <div class="expense-period-meta" id="expenseResultMeta">0 gastos</div>
+
+        <div class="expense-people-split">
+          <div class="expense-total-box sara-total"><span>Sara</span><strong id="expenseSaraTotal">0,00 €</strong></div>
+          <div class="expense-total-box david-total"><span>David</span><strong id="expenseDavidTotal">0,00 €</strong></div>
+        </div>
+
+        <div class="expense-need-split">
+          <div class="expense-need-box"><span>Necesario</span><strong id="expenseNecessaryTotal">0,00 €</strong></div>
+          <div class="expense-need-box"><span>Prescindible</span><strong id="expenseDispensableTotal">0,00 €</strong></div>
+          <div class="expense-need-box"><span>Capricho</span><strong id="expenseWhimTotal">0,00 €</strong></div>
+        </div>
+      </div>
+
       <div class="card"><div class="tx-list" id="allList"></div></div>
     </section>
 
@@ -774,13 +792,31 @@
   function expensePeriodData(){
     let data=expenses.slice();
     let label='Todo el histórico';
+    const now=new Date();
+
+    if(expenseDateMode==='today'){
+      const key=localYMD(now);
+      data=data.filter(e=>localYMD(parseDate(e.date))===key);
+      label='Hoy · '+now.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+    }
+
+    if(expenseDateMode==='week'){
+      const start=startOfWeek(now), end=endOfWeek(now);
+      data=data.filter(e=>{ const d=parseDate(e.date); return d>=start && d<=end; });
+      label='Esta semana · '+start.toLocaleDateString('es-ES',{day:'numeric',month:'short'})+' – '+end.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+    }
+
+    if(expenseDateMode==='month'){
+      data=data.filter(e=>isMonth(e.date));
+      label=monthYearLabel(now);
+    }
 
     if(expenseDateMode==='day' && $('expenseDate').value){
       const key=$('expenseDate').value;
       data=data.filter(e=>localYMD(parseDate(e.date))===key);
       const p=key.split('-').map(Number);
       const d=new Date(p[0],p[1]-1,p[2],12);
-      label=d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+      label=d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
     }
 
     if(expenseDateMode==='range'){
@@ -795,32 +831,46 @@
           const p=key.split('-').map(Number);
           return new Date(p[0],p[1]-1,p[2],12).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
         };
-        label=from && to ? fmt(from)+' — '+fmt(to) : from ? 'Desde '+fmt(from) : 'Hasta '+fmt(to);
-      } else {
-        label='Selecciona un rango';
+        label=from && to ? fmt(from)+' – '+fmt(to) : from ? 'Desde '+fmt(from) : 'Hasta '+fmt(to);
+      }else{
+        label='Elige un rango';
       }
     }
+
     return {data,label};
   }
 
-  function renderExpenseTotals(periodData,label){
-    const sara=sum(periodData.filter(e=>e.person==='Sara'));
-    const david=sum(periodData.filter(e=>e.person==='David'));
+  function applyExpenseFilter(data){
+    if(currentFilter==='all') return data.slice();
+    return data.filter(e=>e.person===currentFilter || e.need===currentFilter);
+  }
+
+  function renderExpenseTotals(filteredData,label){
+    const sara=sum(filteredData.filter(e=>e.person==='Sara'));
+    const david=sum(filteredData.filter(e=>e.person==='David'));
+    const necesario=sum(filteredData.filter(e=>e.need==='Necesario' || e.need==='Necesidad'));
+    const prescindible=sum(filteredData.filter(e=>e.need==='Prescindible'));
+    const capricho=sum(filteredData.filter(e=>e.need==='Capricho'));
+    const total=sum(filteredData);
+
+    $('expenseDateLabel').textContent=label;
+    $('expenseFilterLabel').textContent=currentFilter==='all'?'Todos':currentFilter;
+    $('expenseResultTitle').textContent=currentFilter==='all'?'Total seleccionado':'Total · '+currentFilter;
+    $('expenseFilteredTotal').textContent=money(total);
     $('expenseSaraTotal').textContent=money(sara);
     $('expenseDavidTotal').textContent=money(david);
-    $('expenseJointTotal').textContent=money(sara+david);
-    $('expenseDateLabel').textContent=label;
-    $('expenseResultMeta').textContent=periodData.length+' gasto'+(periodData.length===1?'':'s')+' en el periodo';
+    $('expenseNecessaryTotal').textContent=money(necesario);
+    $('expenseDispensableTotal').textContent=money(prescindible);
+    $('expenseWhimTotal').textContent=money(capricho);
+    $('expenseResultMeta').textContent=filteredData.length+' gasto'+(filteredData.length===1?'':'s')+' · '+label;
     $('clearDateFilter').classList.toggle('show',expenseDateMode!=='all');
   }
 
   function renderAll(){
     const period=expensePeriodData();
-    renderExpenseTotals(period.data,period.label);
-
-    let data=period.data.slice().sort((a,b)=>parseDate(b.date)-parseDate(a.date));
-    if(currentFilter!=='all') data=data.filter(e=>e.person===currentFilter || e.need===currentFilter);
-    renderTransactions($('allList'),data,true);
+    const filtered=applyExpenseFilter(period.data).sort((a,b)=>parseDate(b.date)-parseDate(a.date));
+    renderExpenseTotals(filtered,period.label);
+    renderTransactions($('allList'),filtered,true);
   }
 
   function renderNeeds(month){
@@ -1000,14 +1050,7 @@
   }
 
   function clearExpenseDates(){
-    expenseDateMode='all';
-    $('expenseDate').value='';
-    $('expenseDateFrom').value='';
-    $('expenseDateTo').value='';
-    document.querySelectorAll('[data-date-mode]').forEach(b=>b.classList.toggle('active',b.dataset.dateMode==='all'));
-    $('singleDateControl').classList.remove('active');
-    $('rangeDateControl').classList.remove('active');
-    renderAll();
+    setExpenseDateMode('all');
   }
 
   function persist(){ storageSet(KEY,JSON.stringify(expenses)); }
