@@ -35,6 +35,7 @@
     .person-card.sara{background:linear-gradient(145deg,#BE185D,#EC4899 55%,#F97316)}
     .person-card.david{background:linear-gradient(145deg,#1D4ED8,#2563EB 52%,#7C3AED)}
     .person-name{font-size:19px;font-weight:950}
+    .person-date{font-size:10px;opacity:.66;margin-top:2px;font-weight:700}
     .person-main-label{font-size:11px;opacity:.72;margin-top:14px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}
     .person-main{font-size:31px;font-weight:950;letter-spacing:-.05em;margin:3px 0 14px}
     .person-mini{display:grid;grid-template-columns:1fr 1fr;gap:7px}
@@ -81,6 +82,29 @@
     .primary{width:100%;border:0;border-radius:15px;padding:14px;background:linear-gradient(135deg,var(--purple),#4F46E5);color:#fff;font-weight:950;margin-top:8px}
     .danger{border:0;background:#FEF2F2;color:#B91C1C;border-radius:12px;padding:9px 11px;font-size:12px;font-weight:900}.ghost{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:9px 11px;font-size:12px;font-weight:900}
     .split-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .year-hero{background:linear-gradient(135deg,#0F172A,#334155);color:#fff;border-radius:22px;padding:18px;margin-bottom:12px}
+    .year-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .year-total-label{font-size:11px;color:rgba(255,255,255,.62);font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+    .year-total{font-size:32px;font-weight:950;letter-spacing:-.04em;margin:4px 0 14px}
+    .year-split{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .year-split div{background:rgba(255,255,255,.08);border-radius:13px;padding:10px}
+    .year-split span{display:block;font-size:10px;color:rgba(255,255,255,.62);margin-bottom:3px}
+    .year-select{border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;border-radius:12px;padding:8px 10px;font-weight:900}
+    .period-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:8px 0 12px}
+    .period-tab{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 6px;font-size:12px;font-weight:900}
+    .period-tab.active{background:#111827;color:#fff;border-color:#111827}
+    .query-summary{background:#F8FAFC;border:1px solid var(--line);border-radius:16px;padding:13px;margin:12px 0}
+    .query-title{font-size:12px;color:var(--muted);font-weight:800}
+    .query-total{font-size:28px;font-weight:950;letter-spacing:-.04em;margin:4px 0 9px}
+    .query-split{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+    .query-split div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px}
+    .query-split span{display:block;font-size:10px;color:var(--muted);margin-bottom:2px}
+    .query-split strong{font-size:14px}
+    .month-list{display:flex;flex-direction:column;gap:10px}
+    .month-row{display:grid;grid-template-columns:46px 1fr auto;gap:10px;align-items:center}
+    .month-badge{width:46px;height:36px;border-radius:11px;background:#F3F4F6;display:grid;place-items:center;font-size:11px;font-weight:950;text-transform:uppercase}
+    .month-info{min-width:0}.month-name{font-size:13px;font-weight:900}.month-meta{font-size:10px;color:var(--muted);margin-top:2px}
+    .month-amt{font-size:13px;font-weight:950}
   </style>
 </head>
 <body>
@@ -94,21 +118,23 @@
       <div class="people-grid">
         <article class="person-card sara">
           <div class="person-name">Sara</div>
-          <div class="person-main-label">Hoy</div>
-          <div class="person-main" id="saraToday">0,00 €</div>
+          <div class="person-date" id="saraDateLabel"></div>
+          <div class="person-main-label" id="saraMonthLabel">Mes actual</div>
+          <div class="person-main" id="saraMonth">0,00 €</div>
           <div class="person-mini">
+            <div><span>Hoy</span><strong id="saraToday">0,00 €</strong></div>
             <div><span>Semana</span><strong id="saraWeek">0,00 €</strong></div>
-            <div><span>Mes</span><strong id="saraMonth">0,00 €</strong></div>
           </div>
         </article>
 
         <article class="person-card david">
           <div class="person-name">David</div>
-          <div class="person-main-label">Hoy</div>
-          <div class="person-main" id="davidToday">0,00 €</div>
+          <div class="person-date" id="davidDateLabel"></div>
+          <div class="person-main-label" id="davidMonthLabel">Mes actual</div>
+          <div class="person-main" id="davidMonth">0,00 €</div>
           <div class="person-mini">
+            <div><span>Hoy</span><strong id="davidToday">0,00 €</strong></div>
             <div><span>Semana</span><strong id="davidWeek">0,00 €</strong></div>
-            <div><span>Mes</span><strong id="davidMonth">0,00 €</strong></div>
           </div>
         </article>
       </div>
@@ -156,8 +182,50 @@
     </section>
 
     <section id="summary" class="view">
-      <div class="topbar"><div><div class="eyebrow">Resumen</div><h1>Este mes</h1></div></div>
-      <div class="card" style="margin-bottom:12px"><h3>Distribución por necesidad</h3><div class="categories" id="needSummary"></div></div>
+      <div class="topbar"><div><div class="eyebrow">Resumen</div><h1>Histórico de gastos</h1></div></div>
+
+      <div class="year-hero">
+        <div class="year-top">
+          <div>
+            <div class="year-total-label">Gastado en el año</div>
+            <div class="year-total" id="yearTotal">0,00 €</div>
+          </div>
+          <select id="yearSelect" class="year-select" aria-label="Seleccionar año"></select>
+        </div>
+        <div class="year-split">
+          <div><span>Sara</span><strong id="yearSara">0,00 €</strong></div>
+          <div><span>David</span><strong id="yearDavid">0,00 €</strong></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <h3>Gasto por mes</h3>
+        <div class="month-list" id="monthlyHistory"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <h3>Consultar un periodo</h3>
+        <div class="period-tabs">
+          <button class="period-tab active" type="button" data-period="day">Día</button>
+          <button class="period-tab" type="button" data-period="week">Semana</button>
+          <button class="period-tab" type="button" data-period="month">Mes</button>
+        </div>
+        <div class="field">
+          <label>Selecciona una fecha</label>
+          <input id="queryDate" class="input" type="date">
+        </div>
+        <div class="query-summary">
+          <div class="query-title" id="queryTitle">Hoy</div>
+          <div class="query-total" id="queryTotal">0,00 €</div>
+          <div class="query-split">
+            <div><span>Sara</span><strong id="querySara">0,00 €</strong></div>
+            <div><span>David</span><strong id="queryDavid">0,00 €</strong></div>
+          </div>
+        </div>
+        <div class="tx-list" id="queryTransactions"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px"><h3>Distribución de este mes</h3><div class="categories" id="needSummary"></div></div>
       <div class="card" style="margin-bottom:12px">
         <h3>Presupuesto mensual</h3>
         <div class="field"><label>Presupuesto conjunto (€)</label><input id="budgetInput" class="input" type="number" min="0" step="50"></div>
@@ -226,6 +294,8 @@
   let selectedPerson='Sara';
   let selectedNeed='Necesario';
   let currentFilter='all';
+  let selectedYear=new Date().getFullYear();
+  let queryMode='day';
 
   function storageGet(key){
     try { return localStorage.getItem(key); } catch(e){ return null; }
@@ -249,14 +319,23 @@
     return `${y}-${m}-${day}`;
   }
   function parseDate(s){ const d=new Date(s); return isNaN(d) ? new Date() : d; }
-  function startOfWeek(){
-    const x=new Date(); x.setHours(0,0,0,0);
+  function startOfWeek(date=new Date()){
+    const x=new Date(date); x.setHours(0,0,0,0);
     const offset=(x.getDay()+6)%7; x.setDate(x.getDate()-offset); return x;
   }
   function isToday(s){ return localYMD(parseDate(s))===localYMD(); }
   function isWeek(s){ return parseDate(s)>=startOfWeek(); }
   function isMonth(s){ const d=parseDate(s), n=new Date(); return d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear(); }
   function sum(arr){ return arr.reduce((t,e)=>t+Number(e.amount||0),0); }
+  function monthYearLabel(d=new Date()){
+    return d.toLocaleDateString('es-ES',{month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase());
+  }
+  function shortDateLabel(d=new Date()){
+    return d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+  }
+  function endOfWeek(date){
+    const s=startOfWeek(date); const e=new Date(s); e.setDate(e.getDate()+6); e.setHours(23,59,59,999); return e;
+  }
 
   function render(){
     const today=expenses.filter(e=>isToday(e.date));
@@ -277,6 +356,14 @@
     $('saraMonth').textContent=money(saraMonth);
     $('davidMonth').textContent=money(davidMonth);
 
+    const now=new Date();
+    const currentMonthText=monthYearLabel(now);
+    const currentDateText='A '+shortDateLabel(now);
+    $('saraMonthLabel').textContent=currentMonthText;
+    $('davidMonthLabel').textContent=currentMonthText;
+    $('saraDateLabel').textContent=currentDateText;
+    $('davidDateLabel').textContent=currentDateText;
+
     const tt=sum(today), wt=sum(week), mt=sum(month);
     $('todayTotal').textContent=money(tt);
     $('weekTotal').textContent=money(wt);
@@ -293,6 +380,8 @@
     renderAll();
     renderNeeds(month);
     renderInsight(month, mt);
+    renderYearSummary();
+    renderPeriodQuery();
   }
 
   function renderWeekChart(){
@@ -347,6 +436,61 @@
       <div><div class="cat-name">${n}</div><div class="cat-bar"><div class="cat-fill" style="width:${v/total*100}%;background:${needColors[n]}"></div></div></div>
       <div class="cat-amt">${money(v)}</div></div>`;
     }).join('');
+  }
+
+  function renderYearSummary(){
+    const years=[...new Set(expenses.map(e=>parseDate(e.date).getFullYear()).concat([new Date().getFullYear()]))].sort((a,b)=>b-a);
+    if(!years.includes(selectedYear)) selectedYear=years[0];
+    $('yearSelect').innerHTML=years.map(y=>'<option value="'+y+'" '+(y===selectedYear?'selected':'')+'>'+y+'</option>').join('');
+
+    const yearData=expenses.filter(e=>parseDate(e.date).getFullYear()===selectedYear);
+    $('yearTotal').textContent=money(sum(yearData));
+    $('yearSara').textContent=money(sum(yearData.filter(e=>e.person==='Sara')));
+    $('yearDavid').textContent=money(sum(yearData.filter(e=>e.person==='David')));
+
+    const monthNames=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const rows=[];
+    for(let m=0;m<12;m++){
+      const data=yearData.filter(e=>parseDate(e.date).getMonth()===m);
+      const total=sum(data);
+      const sara=sum(data.filter(e=>e.person==='Sara'));
+      const david=sum(data.filter(e=>e.person==='David'));
+      rows.push({m,total,sara,david,count:data.length});
+    }
+    $('monthlyHistory').innerHTML=rows.map(r=>`
+      <div class="month-row">
+        <div class="month-badge">${monthNames[r.m]}</div>
+        <div class="month-info">
+          <div class="month-name">${new Date(selectedYear,r.m,1).toLocaleDateString('es-ES',{month:'long'}).replace(/^./,c=>c.toUpperCase())}</div>
+          <div class="month-meta">Sara ${money(r.sara)} · David ${money(r.david)} · ${r.count} gasto${r.count===1?'':'s'}</div>
+        </div>
+        <div class="month-amt">${money(r.total)}</div>
+      </div>`).join('');
+  }
+
+  function renderPeriodQuery(){
+    if(!$('queryDate').value) $('queryDate').value=localYMD();
+    const parts=$('queryDate').value.split('-').map(Number);
+    const selected=new Date(parts[0],parts[1]-1,parts[2],12,0,0);
+    let data=[], title='';
+
+    if(queryMode==='day'){
+      data=expenses.filter(e=>localYMD(parseDate(e.date))===localYMD(selected));
+      title=selected.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    } else if(queryMode==='week'){
+      const start=startOfWeek(selected), end=endOfWeek(selected);
+      data=expenses.filter(e=>{ const d=parseDate(e.date); return d>=start && d<=end; });
+      title='Semana del '+start.toLocaleDateString('es-ES',{day:'numeric',month:'short'})+' al '+end.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+    } else {
+      data=expenses.filter(e=>{ const d=parseDate(e.date); return d.getMonth()===selected.getMonth() && d.getFullYear()===selected.getFullYear(); });
+      title=monthYearLabel(selected);
+    }
+
+    $('queryTitle').textContent=title.replace(/^./,c=>c.toUpperCase());
+    $('queryTotal').textContent=money(sum(data));
+    $('querySara').textContent=money(sum(data.filter(e=>e.person==='Sara')));
+    $('queryDavid').textContent=money(sum(data.filter(e=>e.person==='David')));
+    renderTransactions($('queryTransactions'),data.slice().sort((a,b)=>parseDate(b.date)-parseDate(a.date)),false);
   }
 
   function renderInsight(month, mt){
@@ -445,6 +589,16 @@
   $('importBtn').addEventListener('click',()=>$('importFile').click());
   $('importFile').addEventListener('change',e=>{ importData(e.target.files[0]); e.target.value=''; });
   $('clearBtn').addEventListener('click',clearData);
+  $('yearSelect').addEventListener('change',()=>{
+    selectedYear=Number($('yearSelect').value);
+    renderYearSummary();
+  });
+  $('queryDate').addEventListener('change',renderPeriodQuery);
+  document.querySelectorAll('[data-period]').forEach(btn=>btn.addEventListener('click',()=>{
+    queryMode=btn.dataset.period;
+    document.querySelectorAll('[data-period]').forEach(b=>b.classList.toggle('active',b===btn));
+    renderPeriodQuery();
+  }));
 
   document.querySelectorAll('.nav button').forEach(btn=>btn.addEventListener('click',()=>switchView(btn.dataset.view)));
   document.querySelectorAll('[data-person]').forEach(btn=>btn.addEventListener('click',()=>{
