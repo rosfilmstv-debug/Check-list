@@ -116,6 +116,46 @@
     .month-badge{width:46px;height:36px;border-radius:11px;background:#F3F4F6;display:grid;place-items:center;font-size:11px;font-weight:950;text-transform:uppercase}
     .month-info{min-width:0}.month-name{font-size:13px;font-weight:900}.month-meta{font-size:10px;color:var(--muted);margin-top:2px}
     .month-amt{font-size:13px;font-weight:950}
+
+    /* Resumen: comparativa mensual Sara vs David */
+    .month-summary{background:linear-gradient(135deg,#111827,#1F2937 58%,#312E81);color:#fff;border-radius:26px;padding:18px;margin-bottom:12px;box-shadow:0 16px 38px rgba(17,24,39,.18)}
+    .month-summary-label{font-size:11px;color:rgba(255,255,255,.62);font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+    .month-summary-total{font-size:34px;font-weight:950;letter-spacing:-.05em;margin:4px 0 14px}
+    .month-summary-split{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .month-person{border-radius:16px;padding:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)}
+    .month-person span{display:block;font-size:10px;color:rgba(255,255,255,.62);font-weight:800;margin-bottom:4px}
+    .month-person strong{display:block;font-size:19px}
+    .month-person small{display:block;font-size:10px;color:rgba(255,255,255,.62);margin-top:3px}
+    .summary-lead{font-size:11px;line-height:1.45;color:rgba(255,255,255,.72);margin-top:11px}
+    .person-analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    .person-analysis{border-radius:20px;padding:14px;border:1px solid var(--line);background:#fff;box-shadow:var(--shadow)}
+    .person-analysis.sara-analysis{background:linear-gradient(145deg,#FFF1F6,#FFF7ED)}
+    .person-analysis.david-analysis{background:linear-gradient(145deg,#EFF6FF,#F5F3FF)}
+    .person-analysis-name{font-size:15px;font-weight:950;margin-bottom:9px}
+    .person-analysis-total{font-size:25px;font-weight:950;letter-spacing:-.04em}
+    .person-analysis-meta{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.35}
+    .compare-list{display:flex;flex-direction:column;gap:15px}
+    .compare-cat{padding-bottom:14px;border-bottom:1px solid var(--line)}
+    .compare-cat:last-child{border-bottom:0;padding-bottom:0}
+    .compare-cat-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+    .compare-cat-head span{font-size:13px;font-weight:950}.compare-cat-head strong{font-size:12px}
+    .compare-person-row{display:grid;grid-template-columns:42px 1fr 66px;align-items:center;gap:8px;margin-top:7px}
+    .compare-person-row>span{font-size:10px;color:var(--muted);font-weight:900}
+    .compare-person-row>strong{text-align:right;font-size:11px}
+    .compare-track{height:8px;background:#EEF0F4;border-radius:99px;overflow:hidden}
+    .compare-fill{height:100%;min-width:0;border-radius:99px}
+    .compare-fill.sara-fill{background:linear-gradient(90deg,#FB7185,#EC4899)}
+    .compare-fill.david-fill{background:linear-gradient(90deg,#60A5FA,#2563EB)}
+    .summary-section-title{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:12px}
+    .summary-section-title h3{margin:0}.summary-section-title span{font-size:10px;color:var(--muted);font-weight:800}
+    .year-hero.compact{margin-top:12px;padding:15px}
+    .year-hero.compact .year-total{font-size:26px;margin-bottom:10px}
+    .summary-tools{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:0 16px}
+    .summary-tools>summary{list-style:none;cursor:pointer;padding:16px 0;font-weight:950;font-size:14px}
+    .summary-tools>summary::-webkit-details-marker{display:none}
+    .summary-tools>summary:after{content:"+";float:right;color:var(--purple);font-size:18px}
+    .summary-tools[open]>summary:after{content:"–"}
+    .summary-tools-body{padding:0 0 16px}
   </style>
 </head>
 <body>
@@ -192,12 +232,49 @@
     </section>
 
     <section id="summary" class="view">
-      <div class="topbar"><div><div class="eyebrow">Resumen</div><h1>Histórico de gastos</h1></div></div>
+      <div class="topbar"><div><div class="eyebrow">Resumen</div><h1>Resumen del mes</h1></div></div>
 
-      <div class="year-hero">
+      <div class="month-summary">
+        <div class="month-summary-label" id="summaryMonthLabel">Mes actual</div>
+        <div class="month-summary-total" id="summaryMonthTotal">0,00 €</div>
+        <div class="month-summary-split">
+          <div class="month-person"><span>Sara</span><strong id="summarySara">0,00 €</strong><small id="summarySaraShare">0% del mes</small></div>
+          <div class="month-person"><span>David</span><strong id="summaryDavid">0,00 €</strong><small id="summaryDavidShare">0% del mes</small></div>
+        </div>
+        <div class="summary-lead" id="summaryLeadText">Aquí verás quién está gastando más y dónde se concentra el dinero.</div>
+      </div>
+
+      <div class="person-analysis-grid">
+        <div class="person-analysis sara-analysis">
+          <div class="person-analysis-name">Sara</div>
+          <div class="person-analysis-total" id="saraAnalysisTotal">0,00 €</div>
+          <div class="person-analysis-meta" id="saraTopCategory">Sin gastos este mes</div>
+        </div>
+        <div class="person-analysis david-analysis">
+          <div class="person-analysis-name">David</div>
+          <div class="person-analysis-total" id="davidAnalysisTotal">0,00 €</div>
+          <div class="person-analysis-meta" id="davidTopCategory">Sin gastos este mes</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="summary-section-title"><h3>Comparativa por categorías</h3><span>Sara vs David</span></div>
+        <div class="compare-list" id="categoryComparison"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="summary-section-title"><h3>Ritmo semanal</h3><span>Por persona</span></div>
+        <div class="dual-chart" id="personWeekChart"></div>
+        <div class="dual-legend">
+          <span><i class="legend-swatch sara-swatch"></i>Sara</span>
+          <span><i class="legend-swatch david-swatch"></i>David</span>
+        </div>
+      </div>
+
+      <div class="year-hero compact">
         <div class="year-top">
           <div>
-            <div class="year-total-label">Gastado en el año</div>
+            <div class="year-total-label">Total acumulado del año</div>
             <div class="year-total" id="yearTotal">0,00 €</div>
           </div>
           <select id="yearSelect" class="year-select" aria-label="Seleccionar año"></select>
@@ -209,54 +286,20 @@
       </div>
 
       <div class="card" style="margin-bottom:12px">
-        <h3>Gasto por mes</h3>
+        <div class="summary-section-title"><h3>Histórico mensual</h3><span>Solo meses con gasto</span></div>
         <div class="month-list" id="monthlyHistory"></div>
       </div>
 
-      <div class="card" style="margin-bottom:12px">
-        <h3>Ritmo semanal por persona</h3>
-        <div class="dual-chart" id="personWeekChart"></div>
-        <div class="dual-legend">
-          <span><i class="legend-swatch sara-swatch"></i>Sara</span>
-          <span><i class="legend-swatch david-swatch"></i>David</span>
+      <details class="summary-tools">
+        <summary>Presupuesto y copia de seguridad</summary>
+        <div class="summary-tools-body">
+          <div class="field"><label>Presupuesto conjunto (€)</label><input id="budgetInput" class="input" type="number" min="0" step="50"></div>
+          <button class="primary" id="saveBudgetBtn">Guardar presupuesto</button>
+          <div class="split-actions" style="margin-top:12px"><button class="ghost" id="exportBtn">Exportar</button><button class="ghost" id="importBtn">Importar</button></div>
+          <input id="importFile" type="file" accept="application/json" hidden>
+          <button class="danger" style="width:100%;margin-top:10px" id="clearBtn">Borrar todos los datos</button>
         </div>
-      </div>
-
-      <div class="card" style="margin-bottom:12px">
-        <h3>Consultar un periodo</h3>
-        <div class="period-tabs">
-          <button class="period-tab active" type="button" data-period="day">Día</button>
-          <button class="period-tab" type="button" data-period="week">Semana</button>
-          <button class="period-tab" type="button" data-period="month">Mes</button>
-        </div>
-        <div class="field">
-          <label>Selecciona una fecha</label>
-          <input id="queryDate" class="input" type="date">
-        </div>
-        <div class="query-summary">
-          <div class="query-title" id="queryTitle">Hoy</div>
-          <div class="query-total" id="queryTotal">0,00 €</div>
-          <div class="query-split">
-            <div><span>Sara</span><strong id="querySara">0,00 €</strong></div>
-            <div><span>David</span><strong id="queryDavid">0,00 €</strong></div>
-          </div>
-        </div>
-        <div class="tx-list" id="queryTransactions"></div>
-      </div>
-
-      <div class="card" style="margin-bottom:12px"><h3>Distribución de este mes</h3><div class="categories" id="needSummary"></div></div>
-      <div class="card" style="margin-bottom:12px">
-        <h3>Presupuesto mensual</h3>
-        <div class="field"><label>Presupuesto conjunto (€)</label><input id="budgetInput" class="input" type="number" min="0" step="50"></div>
-        <button class="primary" id="saveBudgetBtn">Guardar presupuesto</button>
-      </div>
-      <div class="card">
-        <h3>Copia de seguridad</h3>
-        <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:0">Mientras esta versión sea local, puedes exportar o importar los datos. Al subirla y conectarla a una base de datos, ambos móviles verán los mismos gastos.</p>
-        <div class="split-actions"><button class="ghost" id="exportBtn">Exportar</button><button class="ghost" id="importBtn">Importar</button></div>
-        <input id="importFile" type="file" accept="application/json" hidden>
-        <button class="danger" style="width:100%;margin-top:10px" id="clearBtn">Borrar todos los datos</button>
-      </div>
+      </details>
     </section>
   </main>
 
@@ -314,7 +357,6 @@
   let selectedNeed='Necesario';
   let currentFilter='all';
   let selectedYear=new Date().getFullYear();
-  let queryMode='day';
 
   function storageGet(key){
     try { return localStorage.getItem(key); } catch(e){ return null; }
@@ -330,7 +372,7 @@
   budget = Number(storageGet(BUDGET_KEY) || '1500') || 1500;
 
   const money = (v) => new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}).format(Number(v)||0);
-  const icons = {Casa:'🏠',Comida:'🛒',Coche:'🚗',Ocio:'🎉',Suscripciones:'📱',Salud:'💊',Compras:'🛍️',Perros:'🐶',Otros:'•'};
+  const icons = {Casa:'🏠',Comida:'🛒',Alimentación:'🛒',Coche:'🚗',Transporte:'🚗',Ocio:'🎉',Suscripciones:'📱',Salud:'💊',Compras:'🛍️',Perros:'🐶',Otros:'•'};
   const needColors={Necesario:'#10B981',Prescindible:'#F59E0B',Capricho:'#EF4444'};
 
   function localYMD(d=new Date()){
@@ -396,11 +438,10 @@
     renderCategories(month);
     renderTransactions($('recentList'), expenses.slice().sort((a,b)=>parseDate(b.date)-parseDate(a.date)).slice(0,5), false);
     renderAll();
-    renderNeeds(month);
     renderInsight(month, mt);
+    renderMonthComparison(month);
     renderYearSummary();
     renderPersonWeekChart();
-    renderPeriodQuery();
   }
 
   function renderWeekChart(){
@@ -457,6 +498,62 @@
     }).join('');
   }
 
+  function renderMonthComparison(month){
+    const saraData=month.filter(e=>e.person==='Sara');
+    const davidData=month.filter(e=>e.person==='David');
+    const saraTotal=sum(saraData), davidTotal=sum(davidData), total=saraTotal+davidTotal;
+
+    $('summaryMonthLabel').textContent=monthYearLabel(new Date());
+    $('summaryMonthTotal').textContent=money(total);
+    $('summarySara').textContent=money(saraTotal);
+    $('summaryDavid').textContent=money(davidTotal);
+    $('summarySaraShare').textContent=(total ? Math.round(saraTotal/total*100) : 0)+'% del mes';
+    $('summaryDavidShare').textContent=(total ? Math.round(davidTotal/total*100) : 0)+'% del mes';
+    $('saraAnalysisTotal').textContent=money(saraTotal);
+    $('davidAnalysisTotal').textContent=money(davidTotal);
+
+    function topCategory(data){
+      const map={};
+      data.forEach(e=>map[e.category]=(map[e.category]||0)+Number(e.amount||0));
+      return Object.entries(map).sort((a,b)=>b[1]-a[1])[0] || null;
+    }
+    const saraTop=topCategory(saraData), davidTop=topCategory(davidData);
+    $('saraTopCategory').textContent=saraTop ? 'Principal: '+saraTop[0]+' · '+money(saraTop[1]) : 'Sin gastos este mes';
+    $('davidTopCategory').textContent=davidTop ? 'Principal: '+davidTop[0]+' · '+money(davidTop[1]) : 'Sin gastos este mes';
+
+    if(!total){
+      $('summaryLeadText').textContent='Aún no hay gastos este mes.';
+    } else {
+      const diff=Math.abs(saraTotal-davidTotal);
+      if(diff<0.01) $('summaryLeadText').textContent='Este mes vais exactamente al mismo ritmo de gasto.';
+      else {
+        const leader=saraTotal>davidTotal?'Sara':'David';
+        $('summaryLeadText').textContent=leader+' lleva '+money(diff)+' más de gasto acumulado este mes.';
+      }
+    }
+
+    const catMap={};
+    month.forEach(e=>{
+      const k=e.category || 'Otros';
+      if(!catMap[k]) catMap[k]={Sara:0,David:0};
+      if(e.person==='Sara' || e.person==='David') catMap[k][e.person]+=Number(e.amount||0);
+    });
+    const items=Object.entries(catMap)
+      .map(([name,v])=>({name,sara:v.Sara||0,david:v.David||0,total:(v.Sara||0)+(v.David||0)}))
+      .sort((a,b)=>b.total-a.total);
+
+    $('categoryComparison').innerHTML=items.length ? items.map(item=>{
+      const max=Math.max(item.sara,item.david,1);
+      const saraW=item.sara ? Math.max(3,item.sara/max*100) : 0;
+      const davidW=item.david ? Math.max(3,item.david/max*100) : 0;
+      return `<div class="compare-cat">
+        <div class="compare-cat-head"><span>${icons[item.name]||'•'} ${escapeHtml(item.name)}</span><strong>${money(item.total)}</strong></div>
+        <div class="compare-person-row"><span>Sara</span><div class="compare-track"><div class="compare-fill sara-fill" style="width:${saraW}%"></div></div><strong>${money(item.sara)}</strong></div>
+        <div class="compare-person-row"><span>David</span><div class="compare-track"><div class="compare-fill david-fill" style="width:${davidW}%"></div></div><strong>${money(item.david)}</strong></div>
+      </div>`;
+    }).join('') : '<div class="empty">Aún no hay categorías que comparar este mes.</div>';
+  }
+
   function renderPersonWeekChart(){
     const labels=['L','M','X','J','V','S','D'];
     const start=startOfWeek();
@@ -501,7 +598,8 @@
       const david=sum(data.filter(e=>e.person==='David'));
       rows.push({m,total,sara,david,count:data.length});
     }
-    $('monthlyHistory').innerHTML=rows.map(r=>`
+    const visibleRows=rows.filter(r=>r.count>0);
+    $('monthlyHistory').innerHTML=visibleRows.length ? visibleRows.map(r=>`
       <div class="month-row">
         <div class="month-badge">${monthNames[r.m]}</div>
         <div class="month-info">
@@ -509,7 +607,7 @@
           <div class="month-meta">Sara ${money(r.sara)} · David ${money(r.david)} · ${r.count} gasto${r.count===1?'':'s'}</div>
         </div>
         <div class="month-amt">${money(r.total)}</div>
-      </div>`).join('');
+      </div>`).join('') : '<div class="empty">Todavía no hay gastos en este año.</div>';
   }
 
   function renderPeriodQuery(){
@@ -637,13 +735,6 @@
     selectedYear=Number($('yearSelect').value);
     renderYearSummary();
   });
-  $('queryDate').addEventListener('change',renderPeriodQuery);
-  document.querySelectorAll('[data-period]').forEach(btn=>btn.addEventListener('click',()=>{
-    queryMode=btn.dataset.period;
-    document.querySelectorAll('[data-period]').forEach(b=>b.classList.toggle('active',b===btn));
-    renderPeriodQuery();
-  }));
-
   document.querySelectorAll('.nav button').forEach(btn=>btn.addEventListener('click',()=>switchView(btn.dataset.view)));
   document.querySelectorAll('[data-person]').forEach(btn=>btn.addEventListener('click',()=>{
     selectedPerson=btn.dataset.person;
