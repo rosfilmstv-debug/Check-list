@@ -85,7 +85,11 @@
     .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;white-space:nowrap}.chip.active{background:#111827;color:#fff;border-color:#111827}
     .modal{position:fixed;inset:0;background:rgba(15,23,42,.42);backdrop-filter:blur(7px);display:none;align-items:flex-end;z-index:40}.modal.show{display:flex}
     .sheet{width:min(620px,100%);margin:0 auto;background:#fff;border-radius:28px 28px 0 0;padding:12px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -18px 50px rgba(15,23,42,.18);max-height:90vh;overflow:auto}
-    .grab{width:42px;height:5px;border-radius:9px;background:#D1D5DB;margin:4px auto 14px}.sheet h2{margin:0 0 16px;font-size:22px}
+    .grab{width:42px;height:5px;border-radius:9px;background:#D1D5DB;margin:4px auto 10px}
+    .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .sheet h2{margin:0;font-size:22px}
+    .sheet-close{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:#F9FAFB;color:var(--ink);font-size:23px;line-height:1;display:grid;place-items:center;font-weight:500;cursor:pointer}
+    .sheet-close:active{transform:scale(.96)}
     .field{margin:12px 0}.field label{display:block;font-size:12px;font-weight:900;color:#374151;margin-bottom:7px}
     .input{width:100%;border:1px solid var(--line);background:#F9FAFB;border-radius:14px;padding:13px 14px;outline:none}.input:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(124,58,237,.10)}
     .person-toggle,.need-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px}.need-toggle{grid-template-columns:repeat(3,1fr)}
@@ -399,7 +403,10 @@
   <div class="modal" id="modal">
     <div class="sheet">
       <div class="grab"></div>
-      <h2>Nuevo gasto</h2>
+      <div class="sheet-head">
+        <h2>Nuevo gasto</h2>
+        <button class="sheet-close" type="button" id="closeModalBtn" aria-label="Cerrar nuevo gasto">×</button>
+      </div>
       <div class="field">
         <label>¿Quién ha pagado?</label>
         <div class="person-toggle">
@@ -424,6 +431,7 @@
         </div>
       </div>
       <button class="primary" type="button" id="saveExpenseBtn">Guardar gasto</button>
+      <button class="ghost" type="button" id="cancelExpenseBtn" style="width:100%;margin-top:8px">Cancelar</button>
     </div>
   </div>
 
@@ -467,7 +475,7 @@
   budget = Number(storageGet(BUDGET_KEY) || '1500') || 1500;
 
   const money = (v) => new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}).format(Number(v)||0);
-  const icons = {Casa:'🏠',Comida:'🛒',Alimentación:'🛒',Coche:'🚗',Transporte:'🚗',Ocio:'🎉',Suscripciones:'📱',Salud:'💊',Compras:'🛍️',Perros:'🐶',Otros:'•'};
+  const icons = {Casa:'🏠',Comida:'🛒',Coche:'🚗',Transporte:'🚗',Ocio:'🎉',Suscripciones:'📱',Salud:'💊',Compras:'🛍️',Perros:'🐶',Otros:'•'};
   const needColors={Necesario:'#10B981',Prescindible:'#F59E0B',Capricho:'#EF4444'};
 
   function setCloudStatus(mode,text){
@@ -521,7 +529,7 @@
       person:e.person==='David'?'David':'Sara',
       concept:String(e.concept || 'Gasto'),
       amount:Number(e.amount)||0,
-      category:String(e.category || 'Otros'),
+      category:(String(e.category || 'Otros')==='Alimentación' ? 'Comida' : String(e.category || 'Otros')),
       need:e.need==='Necesidad'?'Necesario':String(e.need || 'Necesario'),
       date:e.date || new Date().toISOString()
     };
@@ -1111,6 +1119,8 @@
 
   $('addBtn').addEventListener('click',openModal);
   $('saveExpenseBtn').addEventListener('click',addExpense);
+  $('closeModalBtn').addEventListener('click',closeModal);
+  $('cancelExpenseBtn').addEventListener('click',closeModal);
   $('modal').addEventListener('click',e=>{ if(e.target===$('modal')) closeModal(); });
   $('goSummary').addEventListener('click',()=>switchView('summary'));
   $('goExpenses').addEventListener('click',()=>switchView('expenses'));
@@ -1155,6 +1165,7 @@
 
   // Pressing Enter on amount saves quickly on mobile.
   $('amountInput').addEventListener('keydown',e=>{ if(e.key==='Enter') addExpense(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape' && $('modal').classList.contains('show')) closeModal(); });
 
   render();
   if(appCode){
