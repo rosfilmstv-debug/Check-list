@@ -555,8 +555,6 @@
     if(storageGet(CLOUD_MIGRATED_KEY)==='1') return;
     const localExpenses=expenses.slice().map(normalizeExpense);
     if(localExpenses.length) await upsertCloudExpenses(localExpenses);
-    const localBudget=Number(storageGet(BUDGET_KEY) || budget || 1500) || 1500;
-    await saveCloudBudget(localBudget);
     storageSet(CLOUD_MIGRATED_KEY,'1');
   }
 
