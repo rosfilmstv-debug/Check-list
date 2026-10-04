@@ -74,6 +74,8 @@
     .cat-name{font-weight:900;font-size:13px}.cat-bar{height:6px;background:#EEF0F4;border-radius:99px;overflow:hidden;margin-top:5px}
     .cat-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--purple),var(--blue))}.cat-amt{font-weight:950;font-size:13px}
     .tx-list{display:flex;flex-direction:column;gap:10px}.tx{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+    .tx.editable{cursor:pointer;border-radius:14px;padding-left:7px;padding-right:7px;margin-left:-7px;margin-right:-7px;transition:background .15s,transform .08s}
+    .tx.editable:active{background:#F3F4F6;transform:scale(.995)}
     .tx:last-child{border-bottom:0}.tx-icon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:#F3F4F6;font-size:18px}
     .tx-title{font-weight:900;font-size:14px}.tx-meta{font-size:11px;color:var(--muted);margin-top:3px}.tx-amt{font-size:14px;font-weight:950}
     .empty{padding:24px 8px;text-align:center;color:var(--muted);font-size:13px}
@@ -404,7 +406,7 @@
     <div class="sheet">
       <div class="grab"></div>
       <div class="sheet-head">
-        <h2>Nuevo gasto</h2>
+        <h2 id="expenseModalTitle">Nuevo gasto</h2>
         <button class="sheet-close" type="button" id="closeModalBtn" aria-label="Cerrar nuevo gasto">×</button>
       </div>
       <div class="field">
@@ -416,6 +418,7 @@
       </div>
       <div class="field"><label>Concepto</label><input id="concept" class="input" placeholder="Ej. Mercadona, gasolina, Netflix..." maxlength="60"></div>
       <div class="field"><label>Importe (€)</label><input id="amountInput" class="input" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00"></div>
+      <div class="field"><label>Fecha</label><input id="expenseDateInput" class="input" type="date"></div>
       <div class="field">
         <label>Categoría</label>
         <select id="categoryInput" class="input">
@@ -458,6 +461,7 @@
   let appCode='';
   let cloudReady=false;
   let cloudSyncing=false;
+  let editingExpenseId=null;
 
   function storageGet(key){
     try { return localStorage.getItem(key); } catch(e){ return null; }
@@ -727,15 +731,30 @@
 
   function renderTransactions(el,data,withDelete){
     el.innerHTML=data.length ? data.map(e=>`
-      <div class="tx">
+      <div class="tx editable" data-expense-id="${escapeHtml(e.id)}" role="button" tabindex="0" aria-label="Editar gasto ${escapeHtml(e.concept)}">
         <div class="tx-icon">${icons[e.category]||'•'}</div>
         <div><div class="tx-title">${escapeHtml(e.concept)}</div>
         <div class="tx-meta">${escapeHtml(e.person)} · ${escapeHtml(e.category)} · ${escapeHtml(e.need)} · ${parseDate(e.date).toLocaleDateString('es-ES',{day:'2-digit',month:'short'})}</div></div>
-        <div style="text-align:right"><div class="tx-amt">${money(e.amount)}</div>${withDelete?`<button class="danger delete-expense" data-id="${e.id}" style="margin-top:6px;padding:5px 8px">Borrar</button>`:''}</div>
+        <div style="text-align:right"><div class="tx-amt">${money(e.amount)}</div>${withDelete?`<button class="danger delete-expense" data-id="${escapeHtml(e.id)}" style="margin-top:6px;padding:5px 8px">Borrar</button>`:''}</div>
       </div>`).join('') : '<div class="empty">No hay gastos todavía. Pulsa + para añadir el primero.</div>';
 
+    el.querySelectorAll('.tx[data-expense-id]').forEach(row=>{
+      const open=()=>openEditExpense(String(row.dataset.expenseId));
+      row.addEventListener('click',e=>{
+        if(e.target.closest('.delete-expense')) return;
+        open();
+      });
+      row.addEventListener('keydown',e=>{
+        if((e.key==='Enter' || e.key===' ') && !e.target.closest('.delete-expense')){
+          e.preventDefault();
+          open();
+        }
+      });
+    });
+
     if(withDelete){
-      el.querySelectorAll('.delete-expense').forEach(btn=>btn.addEventListener('click',async()=>{
+      el.querySelectorAll('.delete-expense').forEach(btn=>btn.addEventListener('click',async e=>{
+        e.stopPropagation();
         if(!cloudReady){ showCloudLock('Conecta la app para modificar los gastos.'); return; }
         const id=String(btn.dataset.id);
         btn.disabled=true;
@@ -993,11 +1012,62 @@
 
   function persist(){ storageSet(KEY,JSON.stringify(expenses)); }
 
-  function openModal(){
+  function setPersonSelection(person){
+    selectedPerson=person==='David'?'David':'Sara';
+    document.querySelectorAll('[data-person]').forEach(b=>b.classList.toggle('active',b.dataset.person===selectedPerson));
+  }
+
+  function setNeedSelection(need){
+    selectedNeed=['Necesario','Prescindible','Capricho'].includes(need)?need:'Necesario';
+    document.querySelectorAll('[data-need]').forEach(b=>b.classList.toggle('active',b.dataset.need===selectedNeed));
+  }
+
+  function openCreateExpense(){
+    editingExpenseId=null;
+    $('expenseModalTitle').textContent='Nuevo gasto';
+    $('saveExpenseBtn').textContent='Guardar gasto';
+    $('concept').value='';
+    $('amountInput').value='';
+    $('categoryInput').value='Casa';
+    $('expenseDateInput').value=localYMD();
+    setPersonSelection(selectedPerson);
+    setNeedSelection('Necesario');
     $('modal').classList.add('show');
     setTimeout(()=>{ try{$('concept').focus();}catch(e){} },120);
   }
-  function closeModal(){ $('modal').classList.remove('show'); }
+
+  function openEditExpense(id){
+    const expense=expenses.find(e=>String(e.id)===String(id));
+    if(!expense) return;
+    editingExpenseId=String(expense.id);
+    $('expenseModalTitle').textContent='Editar gasto';
+    $('saveExpenseBtn').textContent='Guardar cambios';
+    $('concept').value=expense.concept || '';
+    $('amountInput').value=Number(expense.amount || 0);
+    const category=expense.category==='Alimentación'?'Comida':expense.category;
+    const validCategories=[...$('categoryInput').options].map(o=>o.value || o.textContent);
+    $('categoryInput').value=validCategories.includes(category)?category:'Otros';
+    $('expenseDateInput').value=localYMD(parseDate(expense.date));
+    setPersonSelection(expense.person);
+    setNeedSelection(expense.need==='Necesidad'?'Necesario':expense.need);
+    $('modal').classList.add('show');
+    setTimeout(()=>{ try{$('concept').focus(); $('concept').select();}catch(e){} },120);
+  }
+
+  function closeModal(){
+    $('modal').classList.remove('show');
+    editingExpenseId=null;
+    $('expenseModalTitle').textContent='Nuevo gasto';
+    $('saveExpenseBtn').textContent='Guardar gasto';
+  }
+
+  function dateForExpense(selectedDate,existing){
+    const key=selectedDate || localYMD();
+    if(existing && localYMD(parseDate(existing.date))===key) return existing.date;
+    if(key===localYMD()) return new Date().toISOString();
+    const parts=key.split('-').map(Number);
+    return new Date(parts[0],parts[1]-1,parts[2],12,0,0,0).toISOString();
+  }
 
   async function addExpense(){
     const concept=$('concept').value.trim();
@@ -1007,30 +1077,31 @@
     if(!Number.isFinite(amount) || amount<=0){ alert('Escribe un importe válido.'); return; }
     if(!cloudReady){ showCloudLock('Conecta la app para guardar el gasto.'); return; }
 
+    const existing=editingExpenseId ? expenses.find(e=>String(e.id)===String(editingExpenseId)) : null;
     const expense=normalizeExpense({
-      id:'g_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+      id: existing ? existing.id : 'g_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
       person:selectedPerson,
       concept,
       amount,
       category:$('categoryInput').value,
       need:selectedNeed,
-      date:new Date().toISOString()
+      date:dateForExpense($('expenseDateInput').value,existing)
     });
 
     $('saveExpenseBtn').disabled=true;
     try{
       await upsertCloudExpenses([expense]);
-      expenses.push(expense);
+      if(existing){
+        expenses=expenses.map(e=>String(e.id)===String(expense.id)?expense:e);
+      }else{
+        expenses.push(expense);
+      }
       persist();
-      $('concept').value='';
-      $('amountInput').value='';
-      $('categoryInput').value='Casa';
       closeModal();
-      switchView('home');
       render();
-      setCloudStatus('ok','☁ Compartido · guardado');
+      setCloudStatus('ok',existing?'☁ Compartido · actualizado':'☁ Compartido · guardado');
     }catch(err){
-      alert('No se ha podido guardar el gasto. Comprueba la conexión.');
+      alert(existing?'No se han podido guardar los cambios.':'No se ha podido guardar el gasto. Comprueba la conexión.');
       await syncFromCloud(false);
     }finally{
       $('saveExpenseBtn').disabled=false;
@@ -1117,7 +1188,7 @@
     if(e.key==='Enter') $('unlockBtn').click();
   });
 
-  $('addBtn').addEventListener('click',openModal);
+  $('addBtn').addEventListener('click',openCreateExpense);
   $('saveExpenseBtn').addEventListener('click',addExpense);
   $('closeModalBtn').addEventListener('click',closeModal);
   $('cancelExpenseBtn').addEventListener('click',closeModal);
