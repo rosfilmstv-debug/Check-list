@@ -156,6 +156,29 @@
     .summary-tools>summary:after{content:"+";float:right;color:var(--purple);font-size:18px}
     .summary-tools[open]>summary:after{content:"–"}
     .summary-tools-body{padding:0 0 16px}
+
+    /* Filtro de fechas en Gastos */
+    .date-filter-card{margin-bottom:12px}
+    .date-mode{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
+    .date-mode-btn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 6px;font-size:12px;font-weight:900}
+    .date-mode-btn.active{background:#111827;color:#fff;border-color:#111827}
+    .date-controls{display:grid;grid-template-columns:1fr;gap:9px}
+    .date-controls.range{grid-template-columns:1fr 1fr}
+    .date-control{display:none}
+    .date-control.active{display:block}
+    .range-control.active{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+    .date-mini-label{display:block;font-size:10px;color:var(--muted);font-weight:900;margin:0 0 5px 2px;text-transform:uppercase;letter-spacing:.04em}
+    .expense-totals{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:8px;margin-top:12px}
+    .expense-total-box{border-radius:15px;padding:11px 9px;background:#F8FAFC;border:1px solid var(--line)}
+    .expense-total-box.sara-total{background:#FFF1F6}
+    .expense-total-box.david-total{background:#EFF6FF}
+    .expense-total-box.all-total{background:#111827;color:#fff;border-color:#111827}
+    .expense-total-box span{display:block;font-size:9px;color:var(--muted);font-weight:900;text-transform:uppercase;margin-bottom:4px}
+    .expense-total-box.all-total span{color:rgba(255,255,255,.62)}
+    .expense-total-box strong{font-size:15px;letter-spacing:-.02em}
+    .expense-period-meta{font-size:10px;color:var(--muted);font-weight:800;margin-top:9px;text-align:center}
+    .clear-date-btn{border:0;background:transparent;color:var(--purple);font-weight:900;font-size:11px;padding:6px 0 0;display:none;margin-left:auto}
+    .clear-date-btn.show{display:block}
   </style>
 </head>
 <body>
@@ -220,6 +243,41 @@
 
     <section id="expenses" class="view">
       <div class="topbar"><div><div class="eyebrow">Historial</div><h1>Todos los gastos</h1></div></div>
+
+      <div class="card date-filter-card">
+        <div class="summary-section-title"><h3>Buscar por fecha</h3><span id="expenseDateLabel">Todo el histórico</span></div>
+        <div class="date-mode">
+          <button class="date-mode-btn active" type="button" data-date-mode="all">Todo</button>
+          <button class="date-mode-btn" type="button" data-date-mode="day">Fecha</button>
+          <button class="date-mode-btn" type="button" data-date-mode="range">Rango</button>
+        </div>
+
+        <div class="date-control" id="singleDateControl">
+          <label class="date-mini-label" for="expenseDate">Fecha</label>
+          <input id="expenseDate" class="input" type="date">
+        </div>
+
+        <div class="range-control" id="rangeDateControl">
+          <div>
+            <label class="date-mini-label" for="expenseDateFrom">Desde</label>
+            <input id="expenseDateFrom" class="input" type="date">
+          </div>
+          <div>
+            <label class="date-mini-label" for="expenseDateTo">Hasta</label>
+            <input id="expenseDateTo" class="input" type="date">
+          </div>
+        </div>
+
+        <button class="clear-date-btn" id="clearDateFilter" type="button">Limpiar fechas</button>
+
+        <div class="expense-totals">
+          <div class="expense-total-box sara-total"><span>Sara</span><strong id="expenseSaraTotal">0,00 €</strong></div>
+          <div class="expense-total-box david-total"><span>David</span><strong id="expenseDavidTotal">0,00 €</strong></div>
+          <div class="expense-total-box all-total"><span>Total ambos</span><strong id="expenseJointTotal">0,00 €</strong></div>
+        </div>
+        <div class="expense-period-meta" id="expenseResultMeta">0 gastos</div>
+      </div>
+
       <div class="filters">
         <button class="chip active" data-filter="all">Todos</button>
         <button class="chip" data-filter="Sara">Sara</button>
@@ -356,6 +414,7 @@
   let selectedPerson='Sara';
   let selectedNeed='Necesario';
   let currentFilter='all';
+  let expenseDateMode='all';
   let selectedYear=new Date().getFullYear();
 
   function storageGet(key){
@@ -482,8 +541,54 @@
     }
   }
 
+  function expensePeriodData(){
+    let data=expenses.slice();
+    let label='Todo el histórico';
+
+    if(expenseDateMode==='day' && $('expenseDate').value){
+      const key=$('expenseDate').value;
+      data=data.filter(e=>localYMD(parseDate(e.date))===key);
+      const p=key.split('-').map(Number);
+      const d=new Date(p[0],p[1]-1,p[2],12);
+      label=d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+    }
+
+    if(expenseDateMode==='range'){
+      const from=$('expenseDateFrom').value;
+      const to=$('expenseDateTo').value;
+      if(from) data=data.filter(e=>localYMD(parseDate(e.date))>=from);
+      if(to) data=data.filter(e=>localYMD(parseDate(e.date))<=to);
+
+      if(from || to){
+        const fmt=(key)=>{
+          if(!key) return '';
+          const p=key.split('-').map(Number);
+          return new Date(p[0],p[1]-1,p[2],12).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+        };
+        label=from && to ? fmt(from)+' — '+fmt(to) : from ? 'Desde '+fmt(from) : 'Hasta '+fmt(to);
+      } else {
+        label='Selecciona un rango';
+      }
+    }
+    return {data,label};
+  }
+
+  function renderExpenseTotals(periodData,label){
+    const sara=sum(periodData.filter(e=>e.person==='Sara'));
+    const david=sum(periodData.filter(e=>e.person==='David'));
+    $('expenseSaraTotal').textContent=money(sara);
+    $('expenseDavidTotal').textContent=money(david);
+    $('expenseJointTotal').textContent=money(sara+david);
+    $('expenseDateLabel').textContent=label;
+    $('expenseResultMeta').textContent=periodData.length+' gasto'+(periodData.length===1?'':'s')+' en el periodo';
+    $('clearDateFilter').classList.toggle('show',expenseDateMode!=='all');
+  }
+
   function renderAll(){
-    let data=expenses.slice().sort((a,b)=>parseDate(b.date)-parseDate(a.date));
+    const period=expensePeriodData();
+    renderExpenseTotals(period.data,period.label);
+
+    let data=period.data.slice().sort((a,b)=>parseDate(b.date)-parseDate(a.date));
     if(currentFilter!=='all') data=data.filter(e=>e.person===currentFilter || e.need===currentFilter);
     renderTransactions($('allList'),data,true);
   }
@@ -648,6 +753,33 @@
     $('insightBox').innerHTML=`<strong>Lectura rápida del mes</strong><p>${t}</p>`;
   }
 
+  function setExpenseDateMode(mode){
+    expenseDateMode=mode;
+    document.querySelectorAll('[data-date-mode]').forEach(b=>b.classList.toggle('active',b.dataset.dateMode===mode));
+    $('singleDateControl').classList.toggle('active',mode==='day');
+    $('rangeDateControl').classList.toggle('active',mode==='range');
+
+    if(mode==='day' && !$('expenseDate').value) $('expenseDate').value=localYMD();
+    if(mode==='range' && !$('expenseDateFrom').value && !$('expenseDateTo').value){
+      const now=new Date();
+      const first=new Date(now.getFullYear(),now.getMonth(),1);
+      $('expenseDateFrom').value=localYMD(first);
+      $('expenseDateTo').value=localYMD(now);
+    }
+    renderAll();
+  }
+
+  function clearExpenseDates(){
+    expenseDateMode='all';
+    $('expenseDate').value='';
+    $('expenseDateFrom').value='';
+    $('expenseDateTo').value='';
+    document.querySelectorAll('[data-date-mode]').forEach(b=>b.classList.toggle('active',b.dataset.dateMode==='all'));
+    $('singleDateControl').classList.remove('active');
+    $('rangeDateControl').classList.remove('active');
+    renderAll();
+  }
+
   function persist(){ storageSet(KEY,JSON.stringify(expenses)); }
 
   function openModal(){
@@ -735,6 +867,22 @@
     selectedYear=Number($('yearSelect').value);
     renderYearSummary();
   });
+  document.querySelectorAll('[data-date-mode]').forEach(btn=>btn.addEventListener('click',()=>setExpenseDateMode(btn.dataset.dateMode)));
+  $('expenseDate').addEventListener('change',renderAll);
+  $('expenseDateFrom').addEventListener('change',()=>{
+    if($('expenseDateFrom').value && $('expenseDateTo').value && $('expenseDateFrom').value>$('expenseDateTo').value){
+      $('expenseDateTo').value=$('expenseDateFrom').value;
+    }
+    renderAll();
+  });
+  $('expenseDateTo').addEventListener('change',()=>{
+    if($('expenseDateFrom').value && $('expenseDateTo').value && $('expenseDateTo').value<$('expenseDateFrom').value){
+      $('expenseDateFrom').value=$('expenseDateTo').value;
+    }
+    renderAll();
+  });
+  $('clearDateFilter').addEventListener('click',clearExpenseDates);
+
   document.querySelectorAll('.nav button').forEach(btn=>btn.addEventListener('click',()=>switchView(btn.dataset.view)));
   document.querySelectorAll('[data-person]').forEach(btn=>btn.addEventListener('click',()=>{
     selectedPerson=btn.dataset.person;
