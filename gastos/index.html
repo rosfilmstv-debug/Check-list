@@ -29,13 +29,13 @@
     h1{font-size:27px;line-height:1.05;margin:4px 0 0}
     .avatar-group{display:flex}.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:900;border:3px solid var(--bg);margin-left:-8px;box-shadow:var(--shadow)}
     .avatar:first-child{margin-left:0}.saraA{background:linear-gradient(135deg,var(--pink),var(--orange))}.davidA{background:linear-gradient(135deg,var(--blue),var(--purple))}
+    .shared-date{font-size:12px;color:var(--muted);font-weight:800;margin:2px 2px 9px;text-transform:capitalize}
     .people-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
     .person-card{color:#fff;border-radius:26px;padding:18px 16px;box-shadow:0 16px 36px rgba(17,24,39,.17);position:relative;overflow:hidden}
     .person-card:after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;right:-48px;top:-44px;background:rgba(255,255,255,.09)}
     .person-card.sara{background:linear-gradient(145deg,#BE185D,#EC4899 55%,#F97316)}
     .person-card.david{background:linear-gradient(145deg,#1D4ED8,#2563EB 52%,#7C3AED)}
     .person-name{font-size:19px;font-weight:950}
-    .person-date{font-size:10px;opacity:.66;margin-top:2px;font-weight:700}
     .person-main-label{font-size:11px;opacity:.72;margin-top:14px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}
     .person-main{font-size:31px;font-weight:950;letter-spacing:-.05em;margin:3px 0 14px}
     .person-mini{display:grid;grid-template-columns:1fr 1fr;gap:7px}
@@ -58,6 +58,17 @@
     .chart{height:170px;display:flex;align-items:end;gap:8px;padding-top:10px}.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
     .bar{width:100%;max-width:28px;background:linear-gradient(180deg,#A78BFA,var(--purple));border-radius:9px 9px 5px 5px;min-height:4px;transition:.25s}
     .bar-label{font-size:10px;color:var(--muted)}
+    .dual-chart{height:190px;display:flex;align-items:end;gap:9px;padding-top:12px}
+    .dual-day{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0}
+    .dual-bars{height:145px;width:100%;display:flex;align-items:end;justify-content:center;gap:4px}
+    .dual-bar{width:12px;min-height:4px;border-radius:7px 7px 4px 4px;transition:.25s}
+    .dual-bar.sara-bar{background:linear-gradient(180deg,#FB7185,#EC4899)}
+    .dual-bar.david-bar{background:linear-gradient(180deg,#60A5FA,#2563EB)}
+    .dual-legend{display:flex;gap:14px;align-items:center;margin-top:10px;font-size:11px;color:var(--muted);font-weight:800}
+    .dual-legend span{display:flex;align-items:center;gap:6px}
+    .legend-swatch{width:9px;height:9px;border-radius:3px;display:inline-block}
+    .legend-swatch.sara-swatch{background:#EC4899}
+    .legend-swatch.david-swatch{background:#2563EB}
     .categories{display:flex;flex-direction:column;gap:12px}.cat-row{display:grid;grid-template-columns:32px 1fr auto;align-items:center;gap:10px}
     .cat-icon{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:#F3F4F6}
     .cat-name{font-weight:900;font-size:13px}.cat-bar{height:6px;background:#EEF0F4;border-radius:99px;overflow:hidden;margin-top:5px}
@@ -115,10 +126,10 @@
         <div class="avatar-group"><div class="avatar saraA">S</div><div class="avatar davidA">D</div></div>
       </div>
 
+      <div class="shared-date" id="sharedDateLabel"></div>
       <div class="people-grid">
         <article class="person-card sara">
           <div class="person-name">Sara</div>
-          <div class="person-date" id="saraDateLabel"></div>
           <div class="person-main-label" id="saraMonthLabel">Mes actual</div>
           <div class="person-main" id="saraMonth">0,00 €</div>
           <div class="person-mini">
@@ -129,7 +140,6 @@
 
         <article class="person-card david">
           <div class="person-name">David</div>
-          <div class="person-date" id="davidDateLabel"></div>
           <div class="person-main-label" id="davidMonthLabel">Mes actual</div>
           <div class="person-main" id="davidMonth">0,00 €</div>
           <div class="person-mini">
@@ -201,6 +211,15 @@
       <div class="card" style="margin-bottom:12px">
         <h3>Gasto por mes</h3>
         <div class="month-list" id="monthlyHistory"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <h3>Ritmo semanal por persona</h3>
+        <div class="dual-chart" id="personWeekChart"></div>
+        <div class="dual-legend">
+          <span><i class="legend-swatch sara-swatch"></i>Sara</span>
+          <span><i class="legend-swatch david-swatch"></i>David</span>
+        </div>
       </div>
 
       <div class="card" style="margin-bottom:12px">
@@ -358,11 +377,10 @@
 
     const now=new Date();
     const currentMonthText=monthYearLabel(now);
-    const currentDateText='A '+shortDateLabel(now);
+    const currentDateText='Actualizado a '+shortDateLabel(now);
     $('saraMonthLabel').textContent=currentMonthText;
     $('davidMonthLabel').textContent=currentMonthText;
-    $('saraDateLabel').textContent=currentDateText;
-    $('davidDateLabel').textContent=currentDateText;
+    $('sharedDateLabel').textContent=currentDateText;
 
     const tt=sum(today), wt=sum(week), mt=sum(month);
     $('todayTotal').textContent=money(tt);
@@ -381,6 +399,7 @@
     renderNeeds(month);
     renderInsight(month, mt);
     renderYearSummary();
+    renderPersonWeekChart();
     renderPeriodQuery();
   }
 
@@ -436,6 +455,31 @@
       <div><div class="cat-name">${n}</div><div class="cat-bar"><div class="cat-fill" style="width:${v/total*100}%;background:${needColors[n]}"></div></div></div>
       <div class="cat-amt">${money(v)}</div></div>`;
     }).join('');
+  }
+
+  function renderPersonWeekChart(){
+    const labels=['L','M','X','J','V','S','D'];
+    const start=startOfWeek();
+    const rows=[];
+    for(let i=0;i<7;i++){
+      const d=new Date(start); d.setDate(start.getDate()+i);
+      const key=localYMD(d);
+      const dayData=expenses.filter(e=>localYMD(parseDate(e.date))===key);
+      rows.push({
+        label:labels[i],
+        sara:sum(dayData.filter(e=>e.person==='Sara')),
+        david:sum(dayData.filter(e=>e.person==='David'))
+      });
+    }
+    const max=Math.max(...rows.flatMap(r=>[r.sara,r.david]),1);
+    $('personWeekChart').innerHTML=rows.map(r=>`
+      <div class="dual-day">
+        <div class="dual-bars">
+          <div class="dual-bar sara-bar" style="height:${Math.max(4,r.sara/max*140)}px" title="Sara: ${money(r.sara)}"></div>
+          <div class="dual-bar david-bar" style="height:${Math.max(4,r.david/max*140)}px" title="David: ${money(r.david)}"></div>
+        </div>
+        <div class="bar-label">${r.label}</div>
+      </div>`).join('');
   }
 
   function renderYearSummary(){
